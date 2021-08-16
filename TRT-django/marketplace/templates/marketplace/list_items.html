@@ -1,0 +1,286 @@
+{% extends "marketplace/base.html" %}
+{% load cloudinary %}
+{% block content %}
+<div class="topbar" style="text-align: right;">
+  <a href="{% url 'new_item' %}" class="btn btn-outline-dark" style="font-weight: bold;">POST ITEM</a>
+  <a href="{% url 'gallery' %}" class="btn btn-outline-dark" style="font-weight: bold;">ITEMS FOR SALE</a>
+</div>
+<div class="gallery_back container-fluid mb-3">
+  <br>
+  <div class="container">
+    <div id="gallery_title">My Items for Sale</div>
+    <p>Manage your items here! Confirm once a buyer purchases your item to move forward with the transaction.</p>
+    <hr>
+    {% if not items %}
+    <h3>You have not posted any items yet.</h3>
+    <br />
+    {% endif %}
+    <div class="row">
+      {% for item in items %}
+      <div class="card item-card hover col-12" style="width: 18rem; padding-top: 1%;padding-bottom: 1%">
+        <div class="pic-description" style="background-color: #fff5e6; border-radius:10px">
+          <div style="text-align:center; padding-bottom:4%" class="card-img-top rounded-corners">
+            {% cloudinary item.image format="jpg" width=220 height=150 background="#fff5e6" crop="lpad"%}
+          </div>
+          <div class="card-body">
+            <div class="card-title">{{item.name}}</div>
+            {%if item.negotiable == True%}
+            <p class="card-text"><i class="fas fa-tag"></i> ${{item.price}} USD (negotiable)</p>
+            {%else%}
+            <p class="card-text"><i class="fas fa-tag"></i> ${{item.price}} USD</p>
+            {%endif%}
+            <p class="card-text"><i class="fas fa-hourglass-half"></i> till {{item.deadline}}</p>
+            <p class="card-text"><i class="fa fa-check" aria-hidden="true"></i>&nbsp;Quality</p>
+            {% if item.condition == Item.NEW%}
+            <div class="progress">
+              <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 100%"
+                aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            {% elif item.condition == Item.LIKE_NEW %}
+            <div class="progress">
+              <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 85%"
+                aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            {% elif item.condition == Item.GENTLY_LOVED %}
+            <div class="progress">
+              <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 70%"
+                aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            {% elif item.condition == Item.WELL_LOVED %}
+            <div class="progress">
+              <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 55%"
+                aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            {% elif item.condition == Item.POOR %}
+            <div class="progress">
+              <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 40%"
+                aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            {% endif %}
+            <br>
+
+
+            <!-- Modal -->
+            <div class="modal fade" id="modal{{item.pk}}" tabindex="-1" role="dialog" aria-labelledby="modal{{item.pk}}"
+              aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                  <div class="modal-header" style="background-color: #cee2db;">
+                    <h5 style="font-size:30px" class="modal-title" id="exampleModalLongTitle">{{item.name}}</h5>
+                    <button type="button" class="btn close" onclick="enableHover()" data-bs-dismiss="modal"
+                      aria-label="Close">
+                      <span style="font-size:30px" aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <h2 style="text-align:center;">Item Details</h2>
+                    <div id="myCarousel{{item.pk}}" class="carousel slide text-center multi-item-carousel"
+                      data-bs-ride="carousel">
+                      <!--<a class="carousel-control left" href="#myCarousel{{item.pk}}" data-bs-slide="prev" onclick="$('#myCarousel{{item.pk}}').carousel('prev')">&lsaquo;</a>-->
+                      <br>
+                      <div class="carousel-inner" role="listbox">
+                        <!--carousel-item active-->
+                        <div class="carousel-item active">
+                          {% cloudinary item.image format="jpg" width=320 height=240 crop="lpad" radius=40%}
+                        </div>
+                        {%for image in item.album.all%}
+                        <div class="carousel-item">
+                          {% cloudinary image.image format="jpg" width=320 height=240 crop="lpad" radius=40%}
+                        </div>
+                        {%endfor%}
+                      </div>
+                      <br>
+                      <a class="carousel-control-prev" href="#myCarousel{{item.pk}}" role="button" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                      </a>
+                      <a class="carousel-control-next" href="#myCarousel{{item.pk}}" role="button" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Next</span>
+                      </a>
+                      <!--<a class="carousel-control right" href="#myCarousel{{item.pk}}" data-bs-slide="next" onclick="$('#myCarousel{{item.pk}}').carousel('next')">&rsaquo;</a>-->
+                    </div>
+                    <div style="background:#d8e2dc; border-radius:10px;" id="description">
+                      <div class="item-details">
+                        {%if item.negotiable == True%}
+                        <p class="card-text"><i class="fas fa-tag"></i> ${{item.price}} USD (negotiable)</p>
+                        {%else%}
+                        <p class="card-text"><i class="fas fa-tag"></i> ${{item.price}} USD</p>
+                        {%endif%}
+                        <p class="card-text"><i class="fas fa-hourglass-half"></i> till {{item.deadline}}</p>
+                        <p class="card-text"><i class="fas fa-comment"></i> {{item.description}}</p>
+                        {% for sale in item.transaction_set.all %}
+                        {% if sale.status == Transaction.INITIATED %}
+                        <strong>
+                          <p class="card-text"><i class="fas fa-users"></i>&nbsp; Buyer Request From: {{sale.buyer.name}}</p>
+                          <p class="card-text"><i class="fas fa-id-card"></i> &nbsp;Contact Details: {{sale.buyer.contact}}</p>
+                        </strong>
+                        {% elif sale.status == Transaction.ACKNOWLEDGED or sale.status == Transaction.S_PENDING or sale.status == Transaction.B_PENDING%}
+                        <strong>
+                          <p class="card-text"><i class="fas fa-users"></i> Buyer: {{sale.buyer.name}}</p>
+                          <p class="card-text"><i class="fas fa-id-card"></i> &nbsp;Contact Details: {{sale.buyer.contact}}</p>
+                        </strong>
+
+                        {% elif sale.status == Transaction.COMPLETE %}
+                        <strong>
+                          <p class="card-text"><i class="fas fa-users"></i> Bought by: {{sale.buyer.name}}</p>
+                          <p class="card-text"><i class="fas fa-id-card"></i> &nbsp;Contact Details: {{sale.buyer.contact}}</p>
+                        </strong>
+                        
+                        {% endif %}
+                        {% endfor %}
+                        <p class="card-text"><i class="fa fa-check" aria-hidden="true"></i> Quality</p>
+                        {% if item.condition == Item.NEW%}
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+                            style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% elif item.condition == Item.LIKE_NEW %}
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+                            style="width: 85%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% elif item.condition == Item.GENTLY_LOVED %}
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+                            style="width: 70%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% elif item.condition == Item.WELL_LOVED %}
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+                            style="width: 55%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% elif item.condition == Item.POOR %}
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+                            style="width: 40%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="enableHover()"
+                      data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!--End Modal-->
+
+
+            {% if item.status == Item.AVAILABLE %}
+            <p style="color:rgb(31, 182, 12); font-weight: bold;">AVAILABLE</p>
+            <div class="row" style="padding-top:3%;padding-bottom:4%">
+              <div class="col-sm-12">
+                <a class="btn btn-outline-danger pull-left" style="padding-right:11px; padding-left:11px;"
+                  href="{% url 'delete_item' item.pk %}">Delete</a>
+                <a class="btn btn-outline-secondary" style="padding-right:20px; padding-left:20px;"
+                  href="{% url 'edit_item' item.pk %}">Edit</a>
+                <button type="button" class="btn btn-outline-primary noHover pull-right"
+                  style="padding-right:10px; padding-left:10px;" onclick="disableHover()" data-bs-toggle="modal"
+                  data-bs-target="#modal{{item.pk}}">
+                  Details
+                </button>
+              </div>
+            </div>
+
+            <!-- initiated, acknowledged, s_pending, b_pending -->
+            {% elif item.status == Item.FROZEN %}
+
+            {% for sale in item.transaction_set.all %}
+              {% if sale.status == Transaction.INITIATED %}
+                <p style="color:rgb(226, 200, 50); font-weight: bold;">AWAITING ACCEPTANCE</p>
+                <div class="row" style="padding-top:3%;padding-bottom:4%">
+                  <div class="col-sm-12">
+                    <a class="btn btn-outline-success pull-left" style="padding-right:8px; padding-left:8px;"
+                      href="{% url 'accept_sale' sale.pk %}">Accept</a>
+                    <a class="btn btn-outline-danger" style="padding-right: 8px; padding-left: 8px;"
+                      href="{% url 'cancel_sale' sale.pk %}">Cancel</a>
+                    <button type="button" class="btn btn-outline-primary noHover pull-right"
+                      style="padding-right:10px; padding-left:10px;" onclick="disableHover()" data-bs-toggle="modal"
+                      data-bs-target="#modal{{item.pk}}">
+                      Details
+                    </button>
+                  </div>
+                </div>
+
+              {% elif sale.status == Transaction.ACKNOWLEDGED or sale.status == Transaction.S_PENDING %}
+                <p style="color:rgb(39, 109, 214); font-weight: bold;">IN PROGRESS</p>
+                <div class="row" style="padding-top:3%;padding-bottom:4%">
+                  <div class="col-sm-12">
+                    <a class="btn btn-outline-success pull-left" style="padding-right:6px; padding-left:6px;"
+                      href="{% url 'confirm_sale' sale.pk %}">Confirm</a>
+                    <a class="btn btn-outline-danger" style="padding-right: 8px; padding-left: 8px;"
+                      href="{% url 'cancel_sale' sale.pk %}">Cancel</a>
+                    <button type="button" class="btn btn-outline-primary noHover pull-right"
+                      style="padding-right:10px; padding-left:10px;" onclick="disableHover()" data-bs-toggle="modal"
+                      data-bs-target="#modal{{item.pk}}">
+                      Details
+                    </button>
+                  </div>
+                </div>
+
+              {% elif sale.status == Transaction.B_PENDING %}
+                <p style="color:rgb(39, 109, 214); font-weight: bold;">IN PROGRESS</p>
+                
+                <div class="row" style="padding-top:3%;padding-bottom:4%">
+                  <div class="col-sm-12">
+                    <span data-bs-toggle="popover" data-bs-trigger="hover focus" 
+                      data-bs-content="Awaiting buyer confirmation.">
+                     <button class="btn btn-outline-secondary pull-left" 
+                      style="padding-right:6px; padding-left:6px;" type="button" disabled>Confirm</button>
+                     </span>
+                    <a class="btn btn-outline-danger" style="padding-right: 8px; padding-left: 8px;"
+                      href="{% url 'cancel_sale' sale.pk %}">Cancel</a>
+                      <button type="button" class="btn btn-outline-primary noHover pull-right"
+                      style="padding-right:10px; padding-left:10px;" onclick="disableHover()" data-bs-toggle="modal"
+                      data-bs-target="#modal{{item.pk}}">
+                      Details
+                    </button>
+                  </div>
+                </div>
+              {% endif %}
+
+             
+            {% endfor %}
+            
+      
+
+            {% elif item.status == Item.COMPLETE %}
+            <p style="color:rgb(99, 99, 99); font-weight: bold;">COMPLETE</p>
+                <div class="row" style="padding-top:3%;padding-bottom:4%">
+                  <div class="col-4"> 
+                    <button type="button" class="btn btn-outline-primary noHover pull-right"
+                     style="padding-right:10px; padding-left:10px;" onclick="disableHover()" data-bs-toggle="modal"
+                    data-bs-target="#modal{{item.pk}}"> Details
+                    </button>
+                  </div>
+                </div>
+
+            {% endif %}
+
+            {% if sale.status == Transaction.INITIATED %}
+            <div class="row" style="padding-top:3%;padding-bottom:4%">
+              <div class="col-sm-12">
+                <a class="btn btn-outline-danger pull-left" style="padding-right:11px; padding-left:11px;"
+                  href="{% url 'delete_item' item.pk %}">Delete</a>
+                <a class="btn btn-outline-secondary" style="padding-right:20px; padding-left:20px;"
+                  href="{% url 'edit_item' item.pk %}">Edit</a>
+                <button type="button" class="btn btn-outline-primary noHover pull-right"
+                  style="padding-right:10px; padding-left:10px;" onclick="disableHover()" data-bs-toggle="modal"
+                  data-bs-target="#modal{{item.pk}}">
+                  Details
+                </button>
+              </div>
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock content %}

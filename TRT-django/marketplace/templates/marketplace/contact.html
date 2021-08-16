@@ -1,0 +1,86 @@
+{% extends "marketplace/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div style="background-color: #f3dfc9">
+    <div class="container" id="about-us">
+        <h1 style="font-weight:bold; text-align:center; padding-bottom: 15px">
+            The Developers <br>
+            <p style="font-size:15px; text-align:center; font-weight:normal; padding-top:1%">Please provide feedback in the Google Form below.</p>
+        </h1>
+        <div class="teamprofile row">
+            <div class="col-12 col-lg-3 my-4" style="text-align: center;">
+
+                <div id="Phoebe"></div>
+                <p class="aboutteam">
+                    Phoebe Lin '23<br><i class="far fa-envelope"></i> (pslin@princeton.edu)
+                </p>
+                <div class="d-flex d-lg-flex team-details row">
+                    <div style="text-align: center; font-size: 15px;">
+                        <p class="team-roles sub-text team-description">
+                            Frontend Development<br>
+                            Frontend Design
+                        </p>
+                    
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-3 my-4" style="text-align: center;">
+                <div id="Sara"></div>
+                <p class="aboutteam">
+                    Sara Schwartz '23<br><i class="far fa-envelope"></i> (sarats@princeton.edu)
+                </p>
+                <div class="d-flex d-lg-flex team-details row">
+                    <div style="text-align: center; font-size: 15px;">
+                        <p class="team-roles sub-text team-description">
+                            Team Liason<br>
+                            Frontend Development
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-3 my-4" style="text-align: center;">
+                <div id="Albert"></div>
+                <p class="aboutteam">
+                    Albert Lin '23<br><i class="far fa-envelope"></i> (aklin@princeton.edu)
+                </p>
+                <div class="d-flex d-lg-flex team-details row">
+                    <div style="text-align: center; font-size: 15px;">
+                        <p class="team-roles sub-text team-description">
+                            Team Lead<br>
+                            Backend Development<br>
+                            Frontend React<br>
+                            Systems Management
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-3 my-4" style="text-align: center;">
+                <div id="Katie"></div>
+                <p class="aboutteam">
+                    Katie McLaughlin '23<br><i class="far fa-envelope"></i> (kjm3@princeton.edu)
+                </p>
+                <div class="d-flex d-lg-flex team-details row">
+                    <div style="text-align: center; font-size: 15px;">
+                        <p class="team-roles sub-text team-description">
+                            Graphics Design<br>
+                            Team Liason<br>
+                            Frontend Development
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <br>
+</div>
+<div class="container">
+    <div class="row" style="text-align: center">
+        <p>
+        <iframe
+            src="https://docs.google.com/forms/d/e/1FAIpQLSdG0tUu83mnzcQVjfoT_Xke7HIUfDiV7JiGfeDIr93w_xIIzQ/viewform?embedded=true"
+            width="640" height="688" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe></p>
+    </div>
+</div>
+{% endblock content %}

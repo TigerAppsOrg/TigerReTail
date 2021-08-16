@@ -1,0 +1,291 @@
+{% extends "marketplace/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="topbar" style="text-align: right;">
+    <a href="{% url 'gallery' %}" class="btn btn-outline-dark" style="font-weight: bold;">BACK TO IMAGE GALLERY</a>
+</div>
+    <div class="container my-4">
+        <h2>Request Form</h2> <hr>
+        <form action="{% url 'new_item_request' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row my-2">
+                <div class="col-lg-6 col-sm-12">
+                    <label>Name of Item Requested*</label>
+                    <div class="input-group mb-2">
+                        <div class="input-group-prepend d-none d-sm-block">
+                          <div class="input-group-text only-round-left">
+                            <span style="font-size: 16px; color: rgb(0, 0, 0);">
+                                <i class="fas fa-box-open"></i> 
+                            </span>
+                        </div>
+                      </div>
+                      {{ item_request_form.name|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-lg-6 col-sm-12">
+                    {{ item_request_form.description|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row my-4">
+                <div class="col-lg-3 col-sm-6">
+                    <label>Requested Price*</label>
+                    <div class="input-group mb-2">
+                        <div class="input-group-prepend d-none d-xl-block">
+                          <div class="input-group-text only-round-left">
+                            <span style="font-size: 16px; color: rgb(0, 0, 0);">
+                                <i class="fas fa-dollar-sign"></i> 
+                            </span>
+                          </div>
+                        </div>
+                        {{ item_request_form.price|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-4">
+                    <label>Price Negotiable*</label>
+                    {{ item_request_form.negotiable|as_crispy_field }}
+                </div>
+                <div class="col-lg-4 col-sm-6">
+                    <label>Request Expiration Date*</label>
+                    <div class="input-group mb-2">
+                        <div class="input-group-prepend d-none d-xl-block">
+                          <div class="input-group-text only-round-left">
+                            <span style="font-size: 16px; color: rgb(0, 0, 0);">
+                                <i class="fas fa-calendar"></i> 
+                            </span>
+                          </div>
+                        </div>
+                        {{ item_request_form.deadline|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row my-4">
+                <div class="col-lg-6 col-sm-6">
+                    {{ item_request_form.categories|as_crispy_field }}
+                </div>
+                <div class="col-lg-6 col-sm-6">
+                    {{ item_request_form.condition|as_crispy_field }}
+                </div>
+            </div>
+              
+            <div class="row my-2">
+                <div class="col-lg-6 col-sm-6">
+                    <div class="row my-2">
+                        <label>Reference Image*</label>
+                    </div>
+                    <div class="row my-2">
+                        {{ item_request_form.image|as_crispy_field }}
+                    </div>
+
+                    <div class="row my-2">
+
+                        <div class="col">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#lead_modal">
+                            Preview Reference Image
+                            </button>
+                        </div>
+
+                        <div class="modal fade" id="lead_modal" tabindex="-1" aria-labelledby="lead_modal_label" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                            <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="lead_modal_label">Preview of Reference Image</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="lead_previewer">No image selected yet.</div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                            </div>
+                        </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class ="row my-4">
+                <div class="text-center">
+                    <button id="id_submit" type="submit" value="Submit" class="btn btn-success">Submit</button>
+                </div>
+            </div>
+              
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("id_image").setAttribute("accept", "image/*");
+        let priceValid = true;
+        let deadlineValid = true;
+        let imageValid = true;
+        function updateSubmitButton()
+        {
+            if (!priceValid || !deadlineValid || !imageValid)
+            {
+                document.getElementById("id_submit").disabled = true;
+                submitPopover("please fix errors on form");
+                return;
+            }
+            document.getElementById("id_submit").disabled = false;
+            $("#id_submit").popover("hide");
+        }
+        function imagePopover(text)
+        {
+            document.getElementById("id_image").setAttribute("data-bs-toggle", "popover");
+            document.getElementById("id_image").setAttribute("data-bs-trigger", "manual");
+            document.getElementById("id_image").setAttribute("data-bs-placement", "top");
+            document.getElementById("id_image").setAttribute("data-bs-html", true);
+            document.getElementById("id_image").setAttribute("data-bs-content", "<span class='text-danger'><i class='fas fa-exclamation mx-2'></i>" + text + "</span>");
+            $("#id_image").popover("show");
+        }
+        function submitPopover(text)
+        {
+            document.getElementById("id_submit").setAttribute("data-bs-toggle", "popover");
+            document.getElementById("id_submit").setAttribute("data-bs-trigger", "manual");
+            document.getElementById("id_submit").setAttribute("data-bs-placement", "top");
+            document.getElementById("id_submit").setAttribute("data-bs-html", true);
+            document.getElementById("id_submit").setAttribute("data-bs-content", "<span class='text-danger'><i class='fas fa-exclamation mx-2'></i>" + text + "</span>");
+            $("#id_submit").popover("show");
+        }
+
+        function pricePopover(text)
+        {
+            document.getElementById("id_price").setAttribute("data-bs-toggle", "popover");
+            document.getElementById("id_price").setAttribute("data-bs-trigger", "manual");
+            document.getElementById("id_price").setAttribute("data-bs-placement", "top");
+            document.getElementById("id_price").setAttribute("data-bs-html", true);
+            document.getElementById("id_price").setAttribute("data-bs-content", "<span class='text-danger'><i class='fas fa-exclamation mx-2'></i>" + text + "</span>");
+            $("#id_price").popover("show");
+        }
+
+        function deadlinePopover(text)
+        {
+            document.getElementById("id_deadline").setAttribute("data-bs-toggle", "popover");
+            document.getElementById("id_deadline").setAttribute("data-bs-trigger", "manual");
+            document.getElementById("id_deadline").setAttribute("data-bs-placement", "top");
+            document.getElementById("id_deadline").setAttribute("data-bs-html", true);
+            document.getElementById("id_deadline").setAttribute("data-bs-content", "<span class='text-danger'><i class='fas fa-exclamation mx-2'></i>" + text + "</span>");
+            $("#id_deadline").popover("show");
+        }
+
+        function validateImage()
+        {
+            imageValid = false;
+            const files = document.getElementById("id_image").files;
+            for (const file of files)
+            {
+                // cannot accept >10mb files
+                if (file.size > 10485760) {
+                    imagePopover("image files must have sizes < 10MB");
+                    return;
+                }
+            }
+            imageValid = true;
+            $("#id_image").popover("hide");
+        }
+        function validatePrice()
+        {
+            priceValid = false;
+            const price_string = document.getElementById("id_price").value;
+            if (price_string.indexOf('.') > -1 && price_string.indexOf('.') < price_string.length - 3)
+            {
+                pricePopover("price cannot have more than 2 decimal places");
+                return;
+            }
+            const price = +price_string;
+            if (Number.isNaN(price))
+            {
+                pricePopover("price must be a valid number");
+                return;
+            }
+            if (price < 0)
+            {
+                pricePopover("price cannot be negative");
+                return;
+            }
+            if (price > 999999.99)
+            {
+                pricePopover("price cannot be greater than $999,999.99");
+                return;
+            }
+            priceValid = true;
+            $("#id_price").popover("hide");
+        }
+
+        function validateDeadline()
+        {
+            deadlineValid = false;
+            const date = document.getElementById("id_deadline").value.split('-');
+            if (date.length != 3)
+            {
+                deadlinePopover("fix deadline formatting");
+                return;
+            }
+            const deadline = new Date(date[0], date[1] - 1, date[2]);
+            let today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (deadline < today)
+            {
+                deadlinePopover("deadline cannot be set prior to today");
+                return;
+            }
+            let latestDateText = document.getElementById("hint_id_deadline").innerHTML;
+            latestDateText = latestDateText.substring(latestDateText.length - 10);
+            const latestDate = latestDateText.split('-');
+            const latestDeadline = new Date(latestDate[0], latestDate[1] - 1, latestDate[2]);
+            if (deadline > latestDeadline)
+            {
+                deadlinePopover("deadline cannot be later than " + latestDeadline.toDateString());
+                return;
+            }
+            deadlineValid = true;
+            $("#id_deadline").popover("hide");
+        }
+        function setup()
+        {
+            document.getElementById("id_price").addEventListener("input", validatePrice);
+            document.getElementById("id_deadline").addEventListener("input", validateDeadline);
+            document.getElementById("id_image").addEventListener("input", validateImage);
+            window.setInterval(updateSubmitButton, 100);
+        }
+        document.addEventListener("DOMContentLoaded", setup);
+    </script>
+
+    <script>
+        function updateLeadPreviewer()
+        {
+            const lead_previewer = document.getElementById("lead_previewer");
+            while (lead_previewer.firstChild)
+            {
+                lead_previewer.removeChild(lead_previewer.firstChild);
+            }
+            const files = document.getElementById("id_image").files;
+            if (files.length === 0)
+            {
+                lead_previewer.innerHTML = "No image selected yet.";
+                return;
+            }
+            lead_previewer.innerHTML = "";
+            for (const file of files)
+            {
+                const image = document.createElement("img");
+                image.src = URL.createObjectURL(file);
+                image.style.width = '320px';
+                image.style.height = 'auto';
+                lead_previewer.appendChild(image);
+            }
+        }
+        function setupImagePreviewers()
+        {
+            document.getElementById("id_image").addEventListener("input", updateLeadPreviewer);
+        }
+        document.addEventListener("DOMContentLoaded", setupImagePreviewers);
+    </script>
+{% endblock content %}

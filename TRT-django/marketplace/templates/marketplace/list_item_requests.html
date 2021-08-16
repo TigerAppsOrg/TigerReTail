@@ -1,0 +1,86 @@
+{% extends "marketplace/base.html" %}
+{% load cloudinary %}
+{% block content %}
+<div class="topbar" style="text-align: right;">
+    <a href="{% url 'new_item_request' %}" class="btn btn-outline-dark" style="font-weight: bold;">MAKE REQUEST</a>
+    <a href="{% url 'browse_item_requests' %}" class="btn btn-outline-dark" style="font-weight: bold;">BROWSE REQUESTS</a>
+</div>
+<div class="gallery_back container-fluid mb-3">
+    <br>
+    <div class="container">
+        <div id="gallery_title">My Requests</div>
+        <p>Request items here. If a seller sees your request and thinks their item may match, they will reach out to you! Check out our FAQ for more.</p>
+        <hr>
+        <br>
+        {% if not item_requests %}
+        <h3>You have not made any requests yet.</h3>
+        <br />
+        {% endif %}
+        <div class="col-md-12 row">
+            {% for item_request in item_requests %}
+            <div class="card item-card hover col-12 col-md-4"
+                onclick="$('#button.modal{{item.pk}}.btn.btn-secondary.noHover').click()"
+                style="width: 18rem; padding-top: 1%; padding-bottom: 1%;">
+            
+                <div class="pic-description" style="background-color: #fff5e6; border-radius:10px">
+                    <br>
+                    <div style="text-align:center; padding-bottom:4%" class="card-img-top rounded-corners">
+                        {% cloudinary item_request.image format="jpg" width=270 height=200 background="#fff5e6" crop="lpad"%}
+                    </div>
+
+                    <div class="card-body">
+                        <div class="card-title">{{item_request.name}}</div>
+                        <p class="card-text"><i class="fas fa-comment"></i> {{item_request.description}}</p>
+                        {%if item_request.negotiable == True%}
+                        <p class="card-text"><i class="fas fa-tag"></i> ${{item_request.price}} USD (negotiable)</p>
+                        {%else%}
+                        <p class="card-text"><i class="fas fa-tag"></i> ${{item_request.price}} USD</p>
+                        {%endif%}
+                        <p class="card-text"><i class="fas fa-hourglass-half"></i> till {{item_request.deadline}}</p>
+                        <p class="card-text"><i class="fa fa-check" aria-hidden="true"></i>&nbsp;Quality</p>
+                        {% if item_request.condition == Item.NEW%}
+                        <div class="progress">
+                        <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 100%"
+                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% elif item_request.condition == Item.LIKE_NEW %}
+                        <div class="progress">
+                        <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 85%"
+                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% elif item_request.condition == Item.GENTLY_LOVED %}
+                        <div class="progress">
+                        <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 70%"
+                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% elif item_request.condition == Item.WELL_LOVED %}
+                        <div class="progress">
+                        <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 55%"
+                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% elif item_request.condition == Item.POOR %}
+                        <div class="progress">
+                        <div class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 40%"
+                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        {% endif %}
+
+                        <div class='row' style="padding-top:6%;padding-bottom:4%">
+                            <div class="col-sm-12">
+                                <a class="btn btn-outline-danger pull-left"
+                                    style="padding-right:30px; padding-left:30px;"
+                                    href="{% url 'delete_item_request' item_request.pk %}">Delete</a>
+                                <a class="btn btn-outline-secondary pull-right"
+                                    style="padding-right:39px; padding-left:39px;"
+                                    href="{% url 'edit_item_request' item_request.pk %}">Edit</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+                {% endfor %}
+            
+        </div>
+    </div>
+    {% endblock content %}

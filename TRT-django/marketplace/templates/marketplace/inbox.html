@@ -1,0 +1,329 @@
+{% extends "marketplace/base.html" %}
+{% block content %}
+    {% csrf_token %}
+
+    <div class="gallery_back">
+        <div class="container">
+            <div id="gallery_title">Message Inbox</div>
+            <p class="pb-2">Directly message users once you've connected with them!</p>
+        </div>
+    </div>
+    <div class="container-fluid" style="height: 80vh;">
+
+        <div class="row" style="height: 100%;">
+
+            <div class="col-4 col-sm-3 col-lg-2 pt-2" style="height: 100%; overflow-y: scroll;background-color:rgb(207, 207, 207)">
+                
+                <div class="d-flex align-items-start">
+                    <div class="nav flex-fill nav-pills me-3" id="contact_tabs" role="tablist" aria-orientation="vertical">
+                        {% if contacts %}
+                            {% for contact in contacts %}
+                                <button class="chat nav-link hover-grey active-grey" id="{{ contact.pk }}" style="text-align: right !important; width: 100%; border:none" data-bs-toggle="pill" type="button" role="tab">{{contact.name}}</button>
+                            {% endfor %}
+                        {% else %}
+                            No contacts yet. Contacts are made when you initiate a purchase, receive a purchase request, or respond to an item request.
+                        {% endif %}
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="col-8 col-sm-9 col-lg-10 overflow-auto pt-2" style="height: 100%; background-color:#fff3e9">
+                <div class="row" style="height: 88%;">
+
+                    <div class="col" style="height: 100%; overflow-y: scroll;" id="chat_scroll">
+                        <div id="inbox_root"></div>
+                    </div>
+
+                </div>
+
+               
+
+                <div class="row align-items-end pt-2 border border-secondary border-0 border-top p-2">
+                    <div class="col" style="height: 100%;">
+                        <div class="input-group" style="background-color: #000000">
+                            <input type="text" class="form-control only-round-left" id="text_input" maxlength="2000">
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary only-round-right" id="send_button">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+    'use strict';
+
+    class Inbox extends React.Component
+    {
+        constructor(props)
+        {
+            super(props);
+            this.state = {
+                clear_messages: false,      // using boolean indicators here so that manageMessagesSynchronously()
+                get_more_messages: false,   // can clear and get messages synchronously to avoid setState concurrency issues
+                active_contact_pk: null, 
+                contact_pks: [{% for contact in contacts %}{{contact.pk}}, {% endfor %}], 
+                messages: [], 
+                beg_message_pk: -1, 
+                end_message_pk: -1, 
+                text: '', 
+                sending: false,
+            };
+        }
+
+        // indefinitely clears and gets more messages forward and backward in batches of size 'count' (when indicated to do so by state booleans)
+        // in a synchronous fashion to avoid setState concurrency issues
+        manageMessagesSynchronously(count, period)
+        {
+            if (this.state.clear_messages)
+            {
+                this.setState({clear_messages: false, messages: [], beg_message_pk: -1, end_message_pk: -1}, () => {
+                    window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                });
+                return;
+            }
+            else if (this.state.get_more_messages)
+            {
+                if (!this.state.active_contact_pk)
+                {
+                    window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                    return;
+                }
+                
+                // if no messages yet gotten, just get most recent one first
+                if ((this.state.beg_message_pk == -1) && (this.state.end_message_pk == -1))
+                {
+                    fetch("/inbox/" + this.state.active_contact_pk + "/get_relative/?count=1&direction=backward&base_message_pk=-1")
+                        .then((resp) => {return resp.json();})
+                        .then((data) => {
+                            let messages = [...this.state.messages]; // need a deep copy of array for changes to be detected in componentDidUpdate etc, since arrays are passed by ref
+                            for (const sent_message of data['sent'])
+                            {
+                                messages.push({type: 'sent', datetime: new Date(sent_message[1]), text: sent_message[2]});
+                            }
+                            for (const received_message of data['received'])
+                            {
+                                messages.push({type: 'received', datetime: new Date(received_message[1]), text: received_message[2]});
+                            }
+                            // sort by date
+                            messages.sort((message1, message2) => message1['datetime']-message2['datetime']);
+                            this.setState({get_more_messages: false, messages: messages, end_message_pk: data['last_message_pk'], beg_message_pk: data['last_message_pk']}, () => {
+                                window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                            });
+                        })
+                        .catch((error) => { 
+                            window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                            return console.log(error);
+                        });
+                    return;
+                }
+
+                // synchronously get 'count' messages forward, then backward
+                fetch("/inbox/" + this.state.active_contact_pk + "/get_relative/?count=" + count + "&direction=forward&base_message_pk=" + this.state.end_message_pk)
+                    .then((resp) => {return resp.json();})
+                    .then((data) => {
+                        let messages = [...this.state.messages]; // need a deep copy of array for changes to be detected in componentDidUpdate etc, since arrays are passed by ref
+                        for (const sent_message of data['sent'])
+                        {
+                            messages.push({type: 'sent', datetime: new Date(sent_message[1]), text: sent_message[2]});
+                        }
+                        for (const received_message of data['received'])
+                        {
+                            messages.push({type: 'received', datetime: new Date(received_message[1]), text: received_message[2]});
+                        }
+                        // sort by date
+                        messages.sort((message1, message2) => message1['datetime']-message2['datetime']);
+                        this.setState({messages: messages, end_message_pk: data['last_message_pk'] == -1 ? this.state.end_message_pk : data['last_message_pk']}, () => {
+                            // get 'count' messages backward
+                            fetch("/inbox/" + this.state.active_contact_pk + "/get_relative/?count=" + count + "&direction=backward&base_message_pk=" + this.state.beg_message_pk)
+                                .then((resp) => {return resp.json();})
+                                .then((data) => {
+                                    let messages = [...this.state.messages]; // need a deep copy of array for changes to be detected in componentDidUpdate etc, since arrays are passed by ref
+                                    for (const sent_message of data['sent'])
+                                    {
+                                        messages.push({type: 'sent', datetime: new Date(sent_message[1]), text: sent_message[2]});
+                                    }
+                                    for (const received_message of data['received'])
+                                    {
+                                        messages.push({type: 'received', datetime: new Date(received_message[1]), text: received_message[2]});
+                                    }
+                                    // sort by date
+                                    messages.sort((message1, message2) => message1['datetime']-message2['datetime']);
+                                    this.setState({get_more_messages: false, messages: messages, beg_message_pk: data['last_message_pk'] == -1 ? this.state.beg_message_pk : data['last_message_pk']}, () => {
+                                        window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                                    });
+                                })
+                                .catch((error) => { 
+                                    window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                                    return console.log(error);
+                                });
+                        });
+                    })
+                    .catch((error) => { 
+                        window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                        return console.log(error);
+                    });
+                return;
+            }
+            else 
+            {
+                window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                return;
+            }
+        }
+
+        setInputText(text)
+        {
+            this.setState({text: text});
+            // disable button if empty text or sending or no active_contact_pk
+            document.getElementById("send_button").disabled = false;
+            if (text === '' || this.state.sending || !this.state.active_contact_pk)
+            {
+                document.getElementById("send_button").disabled = true;
+            }
+        }
+
+        setActiveContactPk(contact_pk)
+        {
+            if (this.state.active_contact_pk == contact_pk)
+            {
+                return;
+            }
+            this.setState({active_contact_pk: contact_pk, clear_messages: true});
+            this.setInputText(this.state.text);
+        }
+
+        sendInputText()
+        {
+            if (!this.state.sending && this.state.text != '') {
+                // disable the button
+                document.getElementById("send_button").disabled = true;
+                // clear text input
+                document.getElementById("text_input").value = '';
+                // send the state text 
+                this.setState({sending: true});
+
+                const text = this.state.text;
+
+                const url = '/inbox/send/';
+                fetch(url, {
+                    method: 'post',
+                    headers: {"X-CSRFToken": $('[name="csrfmiddlewaretoken"]').attr('value'), 'Content-Type': 'application/json'},
+                    body: JSON.stringify({"pk": this.state.active_contact_pk, "text": text}),
+                })
+                    .then((resp) => {return resp;})
+                    .then((data) => {
+                        this.setState({sending: false});
+                        $("#chat_scroll").scrollTop($("#chat_scroll")[0].scrollHeight);
+                        })
+                    .catch((error) => {
+                        this.setState({sending: false});
+                        console.log(error);
+                        });
+
+                
+                // clear the state text 
+                this.setInputText('');
+            }
+            else {
+                return;
+            }
+            
+        }
+
+        componentDidMount()
+        {
+            // add listeners to all the contact tabs
+            for (const contact_pk of this.state.contact_pks)
+            {
+                const contact_tab = document.getElementById(contact_pk);
+                contact_tab.addEventListener('click', () => this.setActiveContactPk(contact_pk));
+            }
+            // add listeners to input field and send button
+            const text_input = document.getElementById("text_input");
+            text_input.addEventListener('input', () => this.setInputText(event.target.value));
+            const send_button = document.getElementById("send_button");
+            send_button.addEventListener('click', () => this.sendInputText());
+            text_input.addEventListener('keydown', () => {
+                // check for enter press
+                if (event.keyCode === 13) {
+                    this.sendInputText();
+                }
+            })
+
+            // clear the input initially
+            this.setInputText('');
+            text_input.value = '';
+
+            // start the synchronous messages manager
+            window.setTimeout(() => {this.manageMessagesSynchronously(5, 10)}, 0);
+            // periodically set get_more_messages to true
+            window.setInterval(() => {this.setState({get_more_messages: true})}, 50);
+        }
+
+        // implementing sticky scroll
+        getSnapshotBeforeUpdate(prevProps, prevState)
+        {
+            if (prevState.messages.length === this.state.messages.length)
+            {
+                return null; // if message list did not change, no need to stick scroll
+            }
+            return $("#chat_scroll")[0].scrollHeight - $("#chat_scroll")[0].scrollTop; // distance from bottom of scroll
+        }
+
+        componentDidUpdate(prevProps, prevState, snapshot)
+        {
+            if (snapshot !== null)
+            {
+                $("#chat_scroll").scrollTop($("#chat_scroll")[0].scrollHeight - snapshot);
+            }
+        }
+
+        render()
+        {
+            if (this.state.active_contact_pk)
+            {
+                if (this.state.messages.length > 0)
+                {
+                    return this.state.messages.map(message => React.createElement("div", {
+                        class: "row mt-1" + ((message['type'] === 'sent') ? ' justify-content-end':' justify-content-start')
+                    }, React.createElement("div", {
+                        class: "col-5"
+                    }, React.createElement("div", {
+                        class: "card"
+                    }, React.createElement("div", {
+                        class: "card-body"
+                    }, React.createElement("p", {
+                        class: "card-text"
+                    }, message['text']), React.createElement("p", {
+                        class: "card-text"
+                    }, React.createElement("small", {
+                        class: "text-muted"
+                    }, message['datetime'].toLocaleString())))))));
+                }
+                else 
+                {
+                    return React.createElement('h5', null, 'No message history.');
+                }
+            }
+            else
+            {
+                return React.createElement('h5', null, 'Please select a contact from the left panel to chat with.');
+            }
+            
+        }
+    }
+
+    ReactDOM.render(React.createElement(Inbox, null), document.getElementById('inbox_root'));
+
+    </script>
+
+{% endblock content %}

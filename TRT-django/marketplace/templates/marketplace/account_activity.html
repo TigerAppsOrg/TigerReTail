@@ -1,0 +1,156 @@
+{% extends "marketplace/base.html" %}
+{% load cloudinary %}
+{% block content %}
+
+<!-- Bootstrap collapsables and tables referenced from online documentation. -->
+<div class="container my-4 p-2">
+    <h2>Activity Log</h2>
+    <hr>
+    {% comment %}
+    <div class="card my-2">
+      <div class="card-header hover-grey text-center" id="own_activity_transaction_data" type="button" data-bs-toggle="collapse" data-bs-target="#own_activity_transaction" aria-expanded="false" aria-controls="own_activity_transaction">
+            Your Own Activity
+      </div>
+
+      <div id="own_activity_transaction" class="collapse" aria-labelledby="own_activity_transaction_data">
+        <div class="card-body">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Account</th>
+                <th scope="col">Type</th>
+                <th scope="col">Target</th>
+                <th scope="col">Log</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for own_activity in own_activity_item %}
+              <tr>
+                <th scope="col">{{ own_activity.datetime }}</th>
+                <th scope="col">{{ own_activity.account }}</th>
+                <th scope="col">Item</th>
+                <th scope="col">{{ own_activity.item }}</th>
+                <th scope="col">{{ own_activity.log }}</th>
+              </tr>
+              {% endfor %}
+              {% for own_activity in own_activity_transaction %}
+              <tr>
+                <th scope="col">{{ own_activity.datetime }}</th>
+                <th scope="col">{{ own_activity.account }}</th>
+                <th scope="col">Transaction</th>
+                <th scope="col">{{ own_activity.transaction }}</th>
+                <th scope="col">{{ own_activity.log }}</th>
+              </tr>
+              {% endfor %}
+              {% for own_activity in own_activity_item_request %}
+              <tr>
+                <th scope="col">{{ own_activity.datetime }}</th>
+                <th scope="col">{{ own_activity.account }}</th>
+                <th scope="col">Item Request</th>
+                <th scope="col">{{ own_activity.item_request }}</th>
+                <th scope="col">{{ own_activity.log }}</th>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endcomment %}
+
+    <div class="card my-2">
+      <div class="card-header hover-grey text-center" id="item_activity_data" type="button" data-bs-toggle="collapse" data-bs-target="#item_activity" aria-expanded="false" aria-controls="item_activity">
+            My Items Activity
+      </div>
+
+      <div id="item_activity" class="collapse" aria-labelledby="item_activity_data">
+        <div class="card-body">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Account</th>
+                <th scope="col">Target</th>
+                <th scope="col">Log</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for activity in item_activity %}
+              <tr>
+                <th scope="col">{{ activity.datetime }}</th>
+                <th scope="col">{{ activity.account }}</th>
+                <th scope="col">{{ activity.item }}</th>
+                <th scope="col">{{ activity.log }}</th>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card my-2">
+      <div class="card-header hover-grey text-center" id="transaction_activity_data" type="button" data-bs-toggle="collapse" data-bs-target="#transaction_activity" aria-expanded="false" aria-controls="transaction_activity">
+            My Transactions Activity
+      </div>
+
+      <div id="transaction_activity" class="collapse" aria-labelledby="transaction_activity_data">
+        <div class="card-body">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Account</th>
+                <th scope="col">Target</th>
+                <th scope="col">Log</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for activity in transaction_activity %}
+              <tr>
+                <th scope="col">{{ activity.datetime }}</th>
+                <th scope="col">{{ activity.account }}</th>
+                <th scope="col">{{ activity.transaction }}</th>
+                <th scope="col">{{ activity.log }}</th>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card my-2">
+      <div class="card-header hover-grey text-center" id="item_request_activity_data" type="button" data-bs-toggle="collapse" data-bs-target="#item_request_activity" aria-expanded="false" aria-controls="item_request_activity">
+            My Item Requests Activity
+      </div>
+
+      <div id="item_request_activity" class="collapse" aria-labelledby="item_request_activity_data">
+        <div class="card-body">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Account</th>
+                <th scope="col">Target</th>
+                <th scope="col">Log</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for activity in item_request_activity %}
+              <tr>
+                <th scope="col">{{ activity.datetime }}</th>
+                <th scope="col">{{ activity.account }}</th>
+                <th scope="col">{{ activity.item_request }}</th>
+                <th scope="col">{{ activity.log }}</th>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+</div>
+
+{% endblock content %}

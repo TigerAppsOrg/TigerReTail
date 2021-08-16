@@ -1,0 +1,39 @@
+{% extends "marketplace/base.html" %}
+{% block content %}
+<div class="topbar" style="text-align: right;">
+    <a href="{% url 'gallery' %}" class="btn btn-outline-light" style="font-weight: bold;">IMAGE GALLERY</a>
+</div>
+<div class="container-fluid pb-4">
+    <br>  
+    <div class="container">
+        <div id="gallery_title">Notifications</div><hr>
+        <div class="row">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                    <th scope="col">Time</th>
+                    <th scope="col">Notification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for notification in notifications %}
+                        <tr {% if not notification.seen %}style="background-color: #fff0db;"{% endif %}>
+                            <th scope="row">{{notification.datetime}}</th>
+                            <td><a class="orange-link" href="{{notification.url}}">{{notification.text}}</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    'use strict';
+    $.ajax({
+            type: "GET",
+            url: "{% url 'see_notifications' %}",
+        });
+</script>
+
+{% endblock content %}
