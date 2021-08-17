@@ -119,7 +119,10 @@
                                 window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                             });
                         })
-                        .catch((error) => { 
+                        .catch((error) => {
+                            if (error instanceof TypeError && error.message === "cancelled") {
+                                return console.log(error);
+                            } 
                             window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                             return console.log(error);
                         });
@@ -161,13 +164,19 @@
                                         window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                                     });
                                 })
-                                .catch((error) => { 
+                                .catch((error) => {
+                                    if (error instanceof TypeError && error.message === "cancelled") {
+                                        return console.log(error);
+                                    } 
                                     window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                                     return console.log(error);
                                 });
                         });
                     })
-                    .catch((error) => { 
+                    .catch((error) => {
+                        if (error instanceof TypeError && error.message === "cancelled") {
+                            return console.log(error);
+                        } 
                         window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                         return console.log(error);
                     });
@@ -264,9 +273,9 @@
             text_input.value = '';
 
             // start the synchronous messages manager
-            window.setTimeout(() => {this.manageMessagesSynchronously(5, 10)}, 0);
+            window.setTimeout(() => {this.manageMessagesSynchronously(25, 200)}, 0);
             // periodically set get_more_messages to true
-            window.setInterval(() => {this.setState({get_more_messages: true})}, 50);
+            window.setInterval(() => {this.setState({get_more_messages: true})}, 100);
         }
 
         // implementing sticky scroll

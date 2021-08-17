@@ -239,6 +239,9 @@
                                 return;
                             })
                             .catch((error) => {
+                                if (error instanceof TypeError && error.message === "cancelled") {
+                                    return console.log(error);
+                                }
                                 window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period)}, period);
                                 return console.log(error);
                             });
@@ -250,6 +253,9 @@
                     return;
                 })
                 .catch((error) => {
+                    if (error instanceof TypeError && error.message === "cancelled") {
+                        return console.log(error);
+                    }
                     window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period)}, period);
                     return console.log(error);
                 });
@@ -290,7 +296,7 @@
 
         function setup() {
             $("#notifications_dropdown").on("show.bs.dropdown", seeNotifications);
-            window.setTimeout(() => {populateNotificationsHTMLSynchronously(15, 10)}, 0);
+            window.setTimeout(() => {populateNotificationsHTMLSynchronously(50, 500)}, 0);
             window.setInterval(getCount, 1000);
         }
 

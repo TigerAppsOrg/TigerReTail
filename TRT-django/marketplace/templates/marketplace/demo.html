@@ -144,6 +144,9 @@
                 return;
             })
             .catch((error) => {
+                if (error instanceof TypeError && error.message === "cancelled") {
+                    return console.log(error);
+                }
                 window.setTimeout(populateItemsSynchronously(count, period), period);
                 return console.log(error);
             });
@@ -152,7 +155,7 @@
     }
 
     function setup() {
-            window.setTimeout(() => {populateItemsSynchronously(5, 10)}, 0);
+            window.setTimeout(() => {populateItemsSynchronously(25, 200)}, 0);
         }
 
     $('document').ready(setup);
