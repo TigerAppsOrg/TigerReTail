@@ -28,7 +28,7 @@
               {% for own_activity in own_activity_item %}
               <tr>
                 <th scope="col">{{ own_activity.datetime }}</th>
-                <th scope="col">{{ own_activity.account }}</th>
+                <th scope="col">{{ own_activity.account.name }}</th>
                 <th scope="col">Item</th>
                 <th scope="col">{{ own_activity.item }}</th>
                 <th scope="col">{{ own_activity.log }}</th>
@@ -37,7 +37,7 @@
               {% for own_activity in own_activity_transaction %}
               <tr>
                 <th scope="col">{{ own_activity.datetime }}</th>
-                <th scope="col">{{ own_activity.account }}</th>
+                <th scope="col">{{ own_activity.account.name }}</th>
                 <th scope="col">Transaction</th>
                 <th scope="col">{{ own_activity.transaction }}</th>
                 <th scope="col">{{ own_activity.log }}</th>
@@ -46,7 +46,7 @@
               {% for own_activity in own_activity_item_request %}
               <tr>
                 <th scope="col">{{ own_activity.datetime }}</th>
-                <th scope="col">{{ own_activity.account }}</th>
+                <th scope="col">{{ own_activity.account.name }}</th>
                 <th scope="col">Item Request</th>
                 <th scope="col">{{ own_activity.item_request }}</th>
                 <th scope="col">{{ own_activity.log }}</th>
@@ -79,7 +79,7 @@
               {% for activity in item_activity %}
               <tr>
                 <th scope="col">{{ activity.datetime }}</th>
-                <th scope="col">{{ activity.account }}</th>
+                <th scope="col">{{ activity.account.name }}</th>
                 <th scope="col">{{ activity.item }}</th>
                 <th scope="col">{{ activity.log }}</th>
               </tr>
@@ -110,7 +110,7 @@
               {% for activity in transaction_activity %}
               <tr>
                 <th scope="col">{{ activity.datetime }}</th>
-                <th scope="col">{{ activity.account }}</th>
+                <th scope="col">{{ activity.account.name }}</th>
                 <th scope="col">{{ activity.transaction }}</th>
                 <th scope="col">{{ activity.log }}</th>
               </tr>
@@ -141,7 +141,7 @@
               {% for activity in item_request_activity %}
               <tr>
                 <th scope="col">{{ activity.datetime }}</th>
-                <th scope="col">{{ activity.account }}</th>
+                <th scope="col">{{ activity.account.name }}</th>
                 <th scope="col">{{ activity.item_request }}</th>
                 <th scope="col">{{ activity.log }}</th>
               </tr>

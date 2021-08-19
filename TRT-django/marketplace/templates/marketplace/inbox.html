@@ -273,7 +273,7 @@
             text_input.value = '';
 
             // start the synchronous messages manager
-            window.setTimeout(() => {this.manageMessagesSynchronously(25, 200)}, 0);
+            window.setTimeout(() => {this.manageMessagesSynchronously(5, 200)}, 0);
             // periodically set get_more_messages to true
             window.setInterval(() => {this.setState({get_more_messages: true})}, 100);
         }

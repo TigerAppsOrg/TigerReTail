@@ -184,9 +184,9 @@ def expiredItemNotice(pk):
     )
     notify(
         item.seller,
-        "Your item "
+        "Your item '"
         + item.name
-        + " has expired. Please edit its deadline if you do not want it removed.",
+        + "' has expired. Please edit its deadline if you do not want it removed.",
         reverse("list_items"),
     )
 
@@ -218,9 +218,9 @@ def expiredItemRequestNotice(pk):
     )
     notify(
         item_request.requester,
-        "Your item request "
+        "Your item request '"
         + item_request.name
-        + " has expired. Please edit its deadline if you do not want it removed.",
+        + "' has expired. Please edit its deadline if you do not want it removed.",
         reverse("list_item_requests"),
     )
 
@@ -561,7 +561,7 @@ def newItem(request):
                 # send confirmation email
                 send_mail(
                     "Item Posted",
-                    "You have posted a new item for sale!\n"
+                    "You have posted your new item '" + item.name + "' for sale!\n"
                     + request.build_absolute_uri(reverse("list_items")),
                     settings.EMAIL_NAME,
                     [account.email],
@@ -701,18 +701,81 @@ def deleteItem(request, pk):
         messages.warning(request, "Cannot delete an item in the unavailable state.")
         return redirect("list_items")
 
+    item_name = item.name
     item.delete()
     messages.success(request, "Item deleted.")
     # send confirmation email
     send_mail(
         "Item Deleted",
-        "You have removed an item for sale.\n"
+        "You have removed your item '" + item_name + "' from sale.\n"
         + request.build_absolute_uri((reverse("list_items"))),
         settings.EMAIL_NAME,
         [account.email],
         fail_silently=True,
     )
     return redirect("list_items")
+
+
+# ----------------------------------------------------------------------
+
+# contact the seller of an item
+
+
+@authentication_required
+def contactItem(request, pk):
+    account = Account.objects.get(username=request.session.get("username"))
+
+    try:
+        item = Item.objects.get(pk=pk)
+    except:
+        return HttpResponse(status=400)
+
+    # cannot contact your own item
+    if item.seller == account:
+        # rejected
+        messages.warning(
+            request, "Cannot respond to an item you posted yourself."
+        )
+        return redirect("gallery")
+
+    # create a contact and set log
+    account.contacts.add(item.seller)  # (m2m goes both ways)
+    # notify the seller
+    notify(
+        item.seller,
+        account.name
+        + " has connected with you regarding your item. You can now send direct messages through the inbox regarding your item '"
+        + item.name + "'",
+        request.build_absolute_uri(reverse("inbox")),
+    )
+    # notify the contacter
+    notify(
+        account,
+        item.seller.name
+        + " has been added as a contact. You can now send direct messages through the inbox regarding the item '"
+        + item.name + "'",
+        request.build_absolute_uri(reverse("inbox")),
+    )
+    send_mail(
+        "Received Response to Your Posted Item",
+        "Your item '" + item.name + "' has been responded to by a potential buyer, " + account.name + ".\n"
+        + request.build_absolute_uri(reverse("list_items")),
+        settings.EMAIL_NAME,
+        [item.seller.email],
+        fail_silently=True,
+    )
+    # create an item log, which will be used to list the item history for the seller
+    logItemAction(item, account, "contact")
+    messages.success(
+        request,
+        "You can directly message "
+        + item.seller.name
+        + " about the item '"
+        + item.name
+        + "' through the inbox!",
+    )
+
+    return redirect("inbox")
 
 
 # ----------------------------------------------------------------------
@@ -775,7 +838,7 @@ def newPurchase(request):
     # send confirmation email
     send_mail(
         "Purchase Requested",
-        "You have requested to purchase an item.\n"
+        "You have requested to purchase the item '" + item.name + "' from " + item.seller.name + ".\n"
         + request.build_absolute_uri(reverse("list_purchases")),
         settings.EMAIL_NAME,
         [account.email],
@@ -784,7 +847,7 @@ def newPurchase(request):
     # send notification email to seller
     send_mail(
         "Sale Requested by a Buyer",
-        "Your item has been requested for sale!\n"
+        "Your item '" + item.name + "' has been requested for sale by " + account.name + "!\n"
         + request.build_absolute_uri(reverse("list_items")),
         settings.EMAIL_NAME,
         [item.seller.email],
@@ -793,7 +856,7 @@ def newPurchase(request):
     # notify the seller
     notify(
         item.seller,
-        account.name + " has requested to purchase " + item.name,
+        account.name + " has requested to purchase '" + item.name + "'",
         request.build_absolute_uri(reverse("list_items")),
     )
 
@@ -839,7 +902,7 @@ def confirmPurchase(request, pk):
         # send confirmation emails
         send_mail(
             "Purchase Confirmed",
-            "You have confirmed a purchase.\n"
+            "You have confirmed your purchase of '" + purchase.item.name + "' from " + purchase.item.seller.name + ".\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
             [account.email],
@@ -847,7 +910,7 @@ def confirmPurchase(request, pk):
         )
         send_mail(
             "Sale Awaiting Confirmation",
-            "Your sale has been confirmed by the buyer and awaits your confirmation.\n"
+            "Your sale of '" + purchase.item.name + "' has been confirmed by " + account.name + " and awaits your confirmation.\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
             [purchase.item.seller.email],
@@ -857,9 +920,9 @@ def confirmPurchase(request, pk):
         notify(
             purchase.item.seller,
             account.name
-            + " has confirmed the purchase of "
+            + " has confirmed the purchase of '"
             + purchase.item.name
-            + " and awaits your confirmation",
+            + "' and awaits your confirmation",
             request.build_absolute_uri(reverse("list_items")),
         )
 
@@ -876,7 +939,7 @@ def confirmPurchase(request, pk):
         # send confirmation emails
         send_mail(
             "Purchase Completed",
-            "Your purchase has been completed.\n"
+            "Your purchase of '" + item.name + "' from " + item.seller.name + " has been completed.\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
             [account.email],
@@ -884,7 +947,7 @@ def confirmPurchase(request, pk):
         )
         send_mail(
             "Sale Completed",
-            "Your sale has been confirmed by the buyer and is completed.\n"
+            "Your sale of '" + item.name + "' has been confirmed by " + account.name + " and is completed.\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
             [item.seller.email],
@@ -893,7 +956,7 @@ def confirmPurchase(request, pk):
         # notify the seller
         notify(
             item.seller,
-            account.name + " has confirmed and completed the purchase of " + item.name,
+            account.name + " has confirmed and completed the purchase of '" + item.name + "'",
             request.build_absolute_uri(reverse("list_items")),
         )
 
@@ -937,7 +1000,7 @@ def cancelPurchase(request, pk):
         # send confirmation emails
         send_mail(
             "Purchase Cancelled",
-            "You have cancelled a purchase.\n"
+            "You have cancelled your purchase of '" + item.name + "' from " + item.seller.name + ".\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
             [account.email],
@@ -945,7 +1008,7 @@ def cancelPurchase(request, pk):
         )
         send_mail(
             "Sale Cancelled by Buyer",
-            "Your sale has been cancelled by the buyer.\n"
+            "Your sale of '" + item.name + "' has been cancelled by " + account.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
             [item.seller.email],
@@ -954,7 +1017,7 @@ def cancelPurchase(request, pk):
         # notify the seller
         notify(
             item.seller,
-            account.name + " has cancelled the purchase of " + item.name,
+            account.name + " has cancelled the purchase of '" + item.name + "'",
             request.build_absolute_uri(reverse("list_items")),
         )
 
@@ -989,22 +1052,22 @@ def acceptSale(request, pk):
         notify(
             sale.buyer,
             account.name
-            + " has connected with you. You can now send direct messages to the seller through the inbox regarding "
-            + sale.item.name,
+            + " has connected with you. You can now send direct messages to the seller through the inbox regarding '"
+            + sale.item.name + "'",
             request.build_absolute_uri(reverse("inbox")),
         )
         # notify the seller
         notify(
             account,
             sale.buyer.name
-            + " has been added as a contact. You can now send direct messages to the buyer through the inbox regarding "
-            + sale.item.name,
+            + " has been added as a contact. You can now send direct messages to the buyer through the inbox regarding '"
+            + sale.item.name + "'",
             request.build_absolute_uri(reverse("inbox")),
         )
         # send confirmation email
         send_mail(
             "Sale Accepted",
-            "You have accepted a sale request.\n"
+            "You have accepted a sale request for '" + sale.item.name + "' from " + sale.buyer.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
             [account.email],
@@ -1012,7 +1075,7 @@ def acceptSale(request, pk):
         )
         send_mail(
             "Purchase Request Accepted by Seller",
-            "Your purchase request has been accepted by the seller.\n"
+            "Your purchase request for '" + sale.item.name + "' has been accepted by " + account.name + ".\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
             [sale.buyer.email],
@@ -1021,7 +1084,7 @@ def acceptSale(request, pk):
         # notify the buyer
         notify(
             sale.buyer,
-            account.name + " has accepted your purchase request for " + sale.item.name,
+            account.name + " has accepted your purchase request for '" + sale.item.name + "'",
             request.build_absolute_uri(reverse("list_purchases")),
         )
 
@@ -1067,7 +1130,7 @@ def confirmSale(request, pk):
         # send confirmation email
         send_mail(
             "Sale Confirmed",
-            "You have confirmed a sale.\n"
+            "You have confirmed your sale of '" + sale.item.name + "' to " + sale.buyer.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
             [account.email],
@@ -1075,7 +1138,7 @@ def confirmSale(request, pk):
         )
         send_mail(
             "Purchase Awaiting Confirmation",
-            "Your purchase has been confirmed by the seller and awaits your confirmation\n"
+            "Your purchase of '" + sale.item.name + "' has been confirmed by " + account.name + " and awaits your confirmation\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
             [sale.buyer.email],
@@ -1085,9 +1148,9 @@ def confirmSale(request, pk):
         notify(
             sale.buyer,
             account.name
-            + " has confirmed your purchase of "
+            + " has confirmed your purchase of '"
             + sale.item.name
-            + " and awaits your confirmation",
+            + "' and awaits your confirmation",
             request.build_absolute_uri(reverse("list_purchases")),
         )
 
@@ -1104,7 +1167,7 @@ def confirmSale(request, pk):
         # send confirmation email
         send_mail(
             "Sale Completed",
-            "You have confirmed and completed your sale.\n"
+            "You have confirmed and completed your sale of '" + sale.item.name + "' to " + sale.buyer.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
             [account.email],
@@ -1112,7 +1175,7 @@ def confirmSale(request, pk):
         )
         send_mail(
             "Purchase Completed",
-            "Your purchase has been confirmed by the seller and is completed.\n"
+            "Your purchase of '" + sale.item.name + "' has been confirmed by " + account.name + " and is completed.\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
             [sale.buyer.email],
@@ -1122,8 +1185,8 @@ def confirmSale(request, pk):
         notify(
             sale.buyer,
             account.name
-            + " has confirmed and completed your purchase of "
-            + sale.item.name,
+            + " has confirmed and completed your purchase of '"
+            + sale.item.name + "'",
             request.build_absolute_uri(reverse("list_purchases")),
         )
 
@@ -1166,7 +1229,7 @@ def cancelSale(request, pk):
         # send confirmation email
         send_mail(
             "Sale Cancelled",
-            "You have cancelled a sale.\n"
+            "You have cancelled your sale of '" + sale.item.name + "' to " + sale.buyer.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
             [account.email],
@@ -1174,7 +1237,7 @@ def cancelSale(request, pk):
         )
         send_mail(
             "Purchase Cancelled by Seller",
-            "Your purchase has been cancelled by the seller.\n"
+            "Your purchase of '" + sale.item.name + "' has been cancelled by " + account.name + ".\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
             [sale.buyer.email],
@@ -1183,7 +1246,7 @@ def cancelSale(request, pk):
         # notify the buyer
         notify(
             sale.buyer,
-            account.name + " has cancelled your purchase of " + sale.item.name,
+            account.name + " has cancelled your purchase of '" + sale.item.name + "'",
             request.build_absolute_uri(reverse("list_purchases")),
         )
 
@@ -1233,7 +1296,7 @@ def newItemRequest(request):
                 # send confirmation email
                 send_mail(
                     "Item Request Posted",
-                    "You have posted a new item request!\n"
+                    "You have posted a new item request for '" + item_request.name + "'!\n"
                     + request.build_absolute_uri(reverse("list_item_requests")),
                     settings.EMAIL_NAME,
                     [account.email],
@@ -1343,12 +1406,13 @@ def deleteItemRequest(request, pk):
     if item_request.requester != account:
         raise PermissionDenied
 
+    item_request_name = item_request.name
     item_request.delete()
     messages.success(request, "Item request deleted.")
     # send confirmation email
     send_mail(
         "Item Request Deleted",
-        "You have removed an item request.\n"
+        "You have removed your item request for '" + item_request_name + "'.\n"
         + request.build_absolute_uri((reverse("list_item_requests"))),
         settings.EMAIL_NAME,
         [account.email],
@@ -1365,7 +1429,11 @@ def deleteItemRequest(request, pk):
 @authentication_required
 def contactItemRequest(request, pk):
     account = Account.objects.get(username=request.session.get("username"))
-    item_request = ItemRequest.objects.get(pk=pk)
+
+    try:
+        item_request = ItemRequest.objects.get(pk=pk)
+    except:
+        return HttpResponse(status=400)
 
     # cannot contact your own item_request
     if item_request.requester == account:
@@ -1381,21 +1449,21 @@ def contactItemRequest(request, pk):
     notify(
         item_request.requester,
         account.name
-        + " has connected with you regarding your item request. You can now send direct messages through the inbox regarding your request for "
-        + item_request.name,
+        + " has connected with you regarding your item request. You can now send direct messages through the inbox regarding your request for '"
+        + item_request.name + "'",
         request.build_absolute_uri(reverse("inbox")),
     )
     # notify the contacter
     notify(
         account,
         item_request.requester.name
-        + " has been added as a contact. You can now send direct messages through the inbox regarding the request for "
-        + item_request.name,
+        + " has been added as a contact. You can now send direct messages through the inbox regarding the request for '"
+        + item_request.name + "'",
         request.build_absolute_uri(reverse("inbox")),
     )
     send_mail(
         "Received Response to Your Item Request",
-        "Your item request has been responded to by a potential seller.\n"
+        "Your item request '" + item_request.name + "' has been responded to by a potential seller, " + account.name + ".\n"
         + request.build_absolute_uri(reverse("list_item_requests")),
         settings.EMAIL_NAME,
         [item_request.requester.email],
@@ -1412,7 +1480,7 @@ def contactItemRequest(request, pk):
         + " through the inbox!",
     )
 
-    return redirect("browse_item_requests")
+    return redirect("inbox")
 
 
 # ----------------------------------------------------------------------
@@ -2199,7 +2267,7 @@ def deleteExpired():
             # notify the seller
             notify(
                 item.seller,
-                "Your expired item " + item.name + " has been removed",
+                "Your expired item '" + item.name + "' has been removed",
                 reverse("list_items"),
             )
             # delete the item
@@ -2222,7 +2290,7 @@ def deleteExpired():
         # notify the requester
         notify(
             item_request.requester,
-            "Your expired item request " + item_request.name + " has been removed",
+            "Your expired item request '" + item_request.name + "' has been removed",
             reverse("list_item_requests"),
         )
         # delete the item request
