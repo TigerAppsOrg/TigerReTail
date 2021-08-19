@@ -173,9 +173,9 @@ def expiredItemNotice(pk):
     # send notices
     send_mail(
         "Your Posted Item has Expired",
-        "Your posted item "
+        "Your posted item '"
         + item.name
-        + " has expired.\nPlease edit your item deadline if you would like to prevent your item from being removed.\nItems are removed "
+        + "' has expired.\nPlease edit your item deadline if you would like to prevent your item from being removed.\nItems are removed "
         + str(settings.EXPIRATION_BUFFER)
         + " after their deadlines.",
         settings.EMAIL_NAME,
@@ -207,9 +207,9 @@ def expiredItemRequestNotice(pk):
     # send notices
     send_mail(
         "Your Posted Item Request has Expired",
-        "Your posted item request for "
+        "Your posted item request for '"
         + item_request.name
-        + " has expired.\nPlease edit your item request deadline if you would like to prevent your item request from being removed.\nItem requests are removed "
+        + "' has expired.\nPlease edit your item request deadline if you would like to prevent your item request from being removed.\nItem requests are removed "
         + str(settings.EXPIRATION_BUFFER)
         + " after their deadlines.",
         settings.EMAIL_NAME,
@@ -1475,9 +1475,9 @@ def contactItemRequest(request, pk):
         request,
         "You can directly message "
         + item_request.requester.name
-        + " about the request for "
+        + " about the request for '"
         + item_request.name
-        + " through the inbox!",
+        + "' through the inbox!",
     )
 
     return redirect("inbox")
@@ -2257,9 +2257,9 @@ def deleteExpired():
             # send email notice
             send_mail(
                 "Expired Item Removed",
-                "Your expired item "
+                "Your expired item '"
                 + item.name
-                + " has been removed.\nIf you would still like to sell your item, please feel free to relist it.",
+                + "' has been removed.\nIf you would still like to sell your item, please feel free to relist it.",
                 settings.EMAIL_NAME,
                 [item.seller.email],
                 fail_silently=True,
@@ -2280,9 +2280,9 @@ def deleteExpired():
         # send email notice
         send_mail(
             "Expired Item Request Removed",
-            "Your expired item request "
+            "Your expired item request '"
             + item_request.name
-            + " has been removed.\nIf you would still like to request the item, please feel free to make another request.",
+            + "' has been removed.\nIf you would still like to request the item, please feel free to make another request.",
             settings.EMAIL_NAME,
             [item_request.requester.email],
             fail_silently=True,

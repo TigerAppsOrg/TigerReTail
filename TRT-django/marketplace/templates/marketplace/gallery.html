@@ -231,7 +231,7 @@
               item_html += '</div>';
 
               // modal
-              item_html += '<div class="modal fade" id="modal';
+              item_html += '<div class="modal fade" style="cursor: auto;" id="modal';
               item_html += item['pk'];
               item_html += '" tabindex="-1" role="dialog"aria-labelledby="modal';
               item_html += item['pk'];
@@ -250,7 +250,7 @@
                   item_html += '</div>';
                   // modal body
                   item_html += '<div class="modal-body">';
-                    item_html += '<h2 style="text-align:center;">Item Details</h2>';
+                    item_html += '<h5 style="text-align:center;">(Click Image to Zoom)</h5>';
                     // carousel items
                     item_html += '<div id="myCarousel';
                     item_html += item["pk"];
@@ -259,14 +259,14 @@
                       // carousel list box
                       item_html += '<div class="carousel-inner" role="listbox">';
                         item_html += '<div class="carousel-item active">';
-                          item_html += '<div style="height: 150px;"><img src="';
+                          item_html += '<div style="height: 150px;"><a style="cursor: zoom-in;" target="_blank" href="' + item["image"] + '"><img src="';
                           item_html += item["image"];
-                        item_html += '" style="max-width: 220px; max-height: 150px; width: auto; height: auto;"></div></div>';
+                        item_html += '" style="max-width: 220px; max-height: 150px; width: auto; height: auto;"></a></div></div>';
                         item["album"].forEach(picture =>{
                           item_html += '<div class="carousel-item">';
-                          item_html += '<div style="height: 150px;"><img src="';
+                          item_html += '<div style="height: 150px;"><a style="cursor: zoom-in;" target="_blank" href="' + picture + '"><img src="';
                           item_html += picture;
-                          item_html += '" style="max-width: 220px; max-height: 150px; width: auto; height: auto;">';
+                          item_html += '" style="max-width: 220px; max-height: 150px; width: auto; height: auto;"></a>';
                           item_html += '</div></div>';
                         });
                         /* item_html += '<p>';
@@ -274,7 +274,8 @@
                         item_html += '</p>'; */
                       item_html += '</div>';
                       item_html += '<br>';
-                      // carousel previous button
+                      if (item["album"].length !== 0) {
+                        // carousel previous button
                       item_html += '<a class="carousel-control-prev" href="#myCarousel';
                       item_html += item["pk"];
                       item_html += '" role="button" data-bs-slide="prev">';
@@ -286,6 +287,7 @@
                       item_html += '" role="button" data-bs-slide="next">';
                       item_html += '<span class="carousel-control-next-icon" aria-hidden="true"></span>';
                       item_html += '<span class="sr-only">Next</span></a>';
+                      }
                     item_html += '</div>';
                     // description
                     item_html += '<div style="background:#d8e2dc; border-radius:10px;" id="description">';

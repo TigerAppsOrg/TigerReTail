@@ -5,6 +5,7 @@ from .models import (
     Item,
     Transaction,
     ItemLog,
+    ItemRequestLog,
     TransactionLog,
     AlbumImage,
     ItemRequest,
@@ -21,6 +22,7 @@ admin.site.register(Category)
 admin.site.register(Item)
 admin.site.register(Transaction)
 admin.site.register(ItemLog)
+admin.site.register(ItemRequestLog)
 admin.site.register(TransactionLog)
 admin.site.register(AlbumImage)
 admin.site.register(ItemRequest)
