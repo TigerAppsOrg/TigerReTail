@@ -24,7 +24,7 @@
             <div class="dropdown-menu  dropdown-menu-right" aria-labelledby="dropdownMenuButton">
               <div class="container-fluid dropdown-item mx-0 px-0">
                 <div class="row"> 
-                  <button class="post-dropdown-item px-0 mx-0 noHover" style="border:none; background-color:transparent; outline:none;" data-bs-toggle="modal" data-bs-target="#post-dropdown-item" onclick="disableHover()">POST REQUEST</button>
+                  <button class="post-dropdown-item px-0 mx-0" style="border:none; background-color:transparent; outline:none;" data-bs-toggle="modal" data-bs-target="#post-dropdown-item">POST REQUEST</button>
                 </div>
               </div>
               <a class="dropdown-item" href="{% url 'new_item' %}">POST ITEM</a>
@@ -38,7 +38,7 @@
             <div class="modal-content">
               <div class="modal-header" style="background-color: #cee2db;">
                 <h5 style="font-size:30px" class="modal-title">Post Item Request</h5>
-                <button type="button" class="btn close" onclick="enableHover()" data-bs-dismiss="modal"
+                <button type="button" class="btn close" data-bs-dismiss="modal"
                   aria-label="Close">
                 <span style="font-size:30px" aria-hidden="true">&times;</span>
                 </button>
@@ -49,7 +49,7 @@
                   class="d-none d-sm-inline">Want to Buy?&nbsp;&nbsp;</span>Browse Items</a>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="enableHover()"
+                <button type="button" class="btn btn-secondary"
                   data-bs-dismiss="modal">Close</button>
               </div>
             </div>
@@ -158,7 +158,7 @@
         // generate and add new item_request html elements
         for (const item_request of item_requests.slice(last_rendered_item_request_index + 1)) {
             let item_request_html = '';
-            item_request_html += '<div class="card item-card hover col-12 col-md-4" style="width: 18rem; padding-top: 1%; padding-bottom: 1%;">';
+            item_request_html += '<div class="card item-card hover col-12 col-md-4" style="width: 18rem; padding-top: 1%; padding-bottom: 1%;" data-bs-toggle="modal" data-bs-target="#modal' + item_request["pk"] + '">';
             // image of the item_request
             item_request_html += '<div style="text-align:center; padding-top:6%; padding-bottom:4%" class="card-img-top rounded-corners">';
             item_request_html += '<div style="height: 150px;"><img src="';
@@ -219,14 +219,16 @@
                   item_request_html += '<a class="btn btn-success" style="padding-left: 23px; padding-right: 23px; margin-right: 6px;" href="/item_requests/' + item_request["pk"] + '/contact/">Contact</a>';
                   item_request_html += '<button type="button" id="button_modal';
                   item_request_html += item_request["pk"]
-                  item_request_html += '" class="btn btn-secondary noHover pull-right"';
-                    item_request_html += 'onclick="disableHover()" data-bs-toggle="modal" data-bs-target="#modal';
+                  item_request_html += '" class="btn btn-secondary pull-right"';
+                    item_request_html += 'data-bs-toggle="modal" data-bs-target="#modal';
                     item_request_html += item_request["pk"];
                     item_request_html += '" style="padding-left: 28px; padding-right: 28px;">';
                   item_request_html += 'Details </button>';
                   item_request_html += '<a style="margin-left: 7px;" href="/flag_item_request/' + item_request["pk"] + '/" data-bs-toggle="tooltip" data-bs-placement="top" title="Report"><i class="fas fa-flag" style="color:orange;"></i></a>';
                 item_request_html += '</div>';
               item_request_html += '</div>';
+              item_request_html += '</div>';
+            item_request_html += '</div>';
 
               // modal
               item_request_html += '<div class="modal fade" style="cursor: auto;" id="modal';
@@ -242,7 +244,7 @@
                     item_request_html += '<h5 style="font-size:30px" class="modal-title" id="exampleModalLongTitle">';
                     item_request_html += item_request["name"];
                     item_request_html += '</h5>';
-                    item_request_html += '<button type="button" class="btn close" onclick="enableHover()" data-bs-dismiss="modal" aria-label="Close">';
+                    item_request_html += '<button type="button" class="btn close" data-bs-dismiss="modal" aria-label="Close">';
                     item_request_html += '<span style="font-size:30px" aria-hidden="true">&times;</span>';
                     item_request_html += '</button>';
                   item_request_html += '</div>';
@@ -315,13 +317,11 @@
                   // modal footer
                   item_request_html += '<div class="modal-footer">';
                     item_request_html += '<a class="btn btn-success" style="padding-left: 23px; padding-right: 23px;" href="/item_requests/' + item_request["pk"] + '/contact/">Contact</a>';
-                  item_request_html += '<button type="button" class="btn btn-secondary" onclick="enableHover()"data-bs-dismiss="modal">Close</button>';
+                  item_request_html += '<button type="button" class="btn btn-secondary"data-bs-dismiss="modal">Close</button>';
                   item_request_html += '<a style="margin-left: 10px;" href="/flag_item_request/' + item_request["pk"] + '/" data-bs-toggle="tooltip" data-bs-placement="top" title="Report"><i class="fas fa-flag" style="color:orange;"></i></a>';
                   item_request_html += '</div>';
                 item_request_html += '</div>';
               item_request_html += '</div>';
-            item_request_html += '</div>';
-            item_request_html += '</div>';
             item_request_html += '</div>';
             const item_request_element = document.createElement("div");
             item_request_element.classList.add("col-xxl-4");

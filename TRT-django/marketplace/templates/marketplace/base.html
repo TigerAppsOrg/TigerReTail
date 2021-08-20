@@ -29,6 +29,11 @@
 </head>
 
 <body>
+    <div class="alert alert-warning alert-dismissible fade show my-0 py-0" role="alert">
+        This site is still new. Please leave any feedback via the <a class="orange-link" href="{% url 'contact' %}">Contact Us</a> page!
+        <button type="button" class="btn-close py-1" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
     <nav class="navbar navbar-expand-lg navbar-light" style="background-color: rgb(245, 174, 81);">
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'gallery' %}"> <img src="{% static 'marketplace/logo.png' %}" width="40"> <strong> Tiger ReTail</strong></a>
