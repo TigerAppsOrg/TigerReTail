@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db.models import Window, F, prefetch_related_objects, Q
 from django.db.models.functions import RowNumber
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import send_mail
 from django.core.cache import cache
 from django.conf import settings
@@ -27,10 +28,6 @@ from .forms import AccountForm, ItemForm, ItemRequestForm, ItemFlagForm, ItemReq
 from utils import CASClient
 from datetime import timedelta
 
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
 from django.core.exceptions import PermissionDenied
 import secrets
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
@@ -40,6 +37,9 @@ from sys import stderr
 
 from background_task import background
 from datetime import date, datetime
+
+from io import BytesIO
+from PIL import Image
 
 # ----------------------------------------------------------------------
 
@@ -537,6 +537,24 @@ def newItem(request):
             item.seller = account
             item.posted_date = timezone.now()
             item.status = Item.AVAILABLE
+            if item.image.size > settings.MAX_IMAGE_SIZE:
+                messages.error(
+                    request,
+                    "Could not save lead image, since it is > 10MB."
+                )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+            # resize lead image
+            image_pil = Image.open(item.image)
+            if image_pil.mode != "RGB":
+                image_pil = image_pil.convert("RGB")
+            image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+            image_io = BytesIO()
+            image_pil.save(image_io, format='JPEG')
+            image_file = InMemoryUploadedFile(image_io, None, item.name + '_lead.jpg', 'image/jpeg', None, None)
+            item.image = image_file
+
             try:
                 item.save()
                 # save the m2m fields, which did not yet bc of commit=False
@@ -549,7 +567,22 @@ def newItem(request):
                     if i >= settings.ALBUM_LIMIT:
                         break
                     try:
-                        AlbumImage(image=album[i], item=item).save()
+                        if album[i].size > settings.MAX_IMAGE_SIZE:
+                            messages.error(
+                                request,
+                                "Could not save album image, since it is > 10MB."
+                            )
+                            return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+                        
+                        image_pil = Image.open(album[i])
+                        if image_pil.mode != "RGB":
+                            image_pil = image_pil.convert("RGB")
+                        image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                        image_io = BytesIO()
+                        image_pil.save(image_io, format='JPEG')
+                        image_file = InMemoryUploadedFile(image_io, None, item.name + '_' + str(i+num_already) + '.jpg', 'image/jpeg', None, None)
+                        AlbumImage(image=image_file, item=item).save()
                     except Exception as e:
                         messages.error(
                             request,
@@ -622,12 +655,30 @@ def editItem(request, pk):
         item_form = ItemForm(request.POST, request.FILES, instance=item)
         if item_form.is_valid():
             try:
+                if item.image.size > settings.MAX_IMAGE_SIZE:
+                    messages.error(
+                        request,
+                        "Could not save lead image, since it is > 10MB."
+                    )
+                    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+                # resize lead image
+                image_pil = Image.open(item.image)
+                if image_pil.mode != "RGB":
+                    image_pil = image_pil.convert("RGB")
+                image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                image_io = BytesIO()
+                image_pil.save(image_io, format='JPEG')
+                image_file = InMemoryUploadedFile(image_io, None, item.name + '_lead.jpg', 'image/jpeg', None, None)
+                item.image = image_file
+
                 # save changes to item
                 item_form.save()
 
                 # remove the old image from storage (if different)
                 if item_form.cleaned_data["image"] != old_image:
-                    cloudinary.uploader.destroy(str(old_image))
+                    old_image.delete()
 
                 logItemAction(item, account, "edited")
 
@@ -643,7 +694,22 @@ def editItem(request, pk):
                         if i + num_already >= settings.ALBUM_LIMIT:
                             break
                         try:
-                            AlbumImage(image=album[i], item=item).save()
+                            if album[i].size > settings.MAX_IMAGE_SIZE:
+                                messages.error(
+                                    request,
+                                    "Could not save album image, since it is > 10MB."
+                                )
+                                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+                            
+                            image_pil = Image.open(album[i])
+                            if image_pil.mode != "RGB":
+                                image_pil = image_pil.convert("RGB")
+                            image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                            image_io = BytesIO()
+                            image_pil.save(image_io, format='JPEG')
+                            image_file = InMemoryUploadedFile(image_io, None, item.name + '_' + str(i+num_already) + '.jpg', 'image/jpeg', None, None)
+                            AlbumImage(image=image_file, item=item).save()
                         except Exception as e:
                             messages.error(
                                 request,
@@ -1286,6 +1352,24 @@ def newItemRequest(request):
             item_request = item_request_form.save(commit=False)
             item_request.requester = account
             item_request.posted_date = timezone.now()
+            if item_request.image.size > settings.MAX_IMAGE_SIZE:
+                messages.error(
+                    request,
+                    "Could not save lead image, since it is > 10MB."
+                )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+            # resize lead image
+            image_pil = Image.open(item_request.image)
+            if image_pil.mode != "RGB":
+                image_pil = image_pil.convert("RGB")
+            image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+            image_io = BytesIO()
+            image_pil.save(image_io, format='JPEG')
+            image_file = InMemoryUploadedFile(image_io, None, item_request.name + '_lead.jpg', 'image/jpeg', None, None)
+            item_request.image = image_file
+
             try:
                 item_request.save()
                 # save the m2m fields, which did not yet bc of commit=False
@@ -1355,12 +1439,30 @@ def editItemRequest(request, pk):
         )
         if item_request_form.is_valid():
             try:
+                if item_request.image.size > settings.MAX_IMAGE_SIZE:
+                    messages.error(
+                        request,
+                        "Could not save lead image, since it is > 10MB."
+                    )
+                    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+                # resize lead image
+                image_pil = Image.open(item_request.image)
+                if image_pil.mode != "RGB":
+                    image_pil = image_pil.convert("RGB")
+                image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                image_io = BytesIO()
+                image_pil.save(image_io, format='JPEG')
+                image_file = InMemoryUploadedFile(image_io, None, item_request.name + '_lead.jpg', 'image/jpeg', None, None)
+                item_request.image = image_file
+
                 # save changes to item_request
                 item_request_form.save()
 
                 # remove the old image from storage (if different)
                 if item_request_form.cleaned_data["image"] != old_image:
-                    cloudinary.uploader.destroy(str(old_image))
+                    old_image.delete()
 
                 logItemRequestAction(item_request, account, "edited")
                 messages.success(request, "Item request updated.")

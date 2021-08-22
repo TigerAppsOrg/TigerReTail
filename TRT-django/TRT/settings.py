@@ -142,7 +142,8 @@ STATIC_URL = "/static/"
 
 CAS_URL = "https://fed.princeton.edu/cas/"
 ALBUM_LIMIT = 5
-MAX_IMAGE_SIZE = 1024, 1024
+MAX_IMAGE_SHAPE = 1024, 1024
+MAX_IMAGE_SIZE = 10485760
 
 # setting up cloudinary image storage
 cloudinary.config(

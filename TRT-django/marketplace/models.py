@@ -5,12 +5,8 @@ from django.utils import timezone
 from django.dispatch import receiver
 from django.db.models.signals import post_delete
 from decimal import Decimal
-from cloudinary.models import CloudinaryField
-import cloudinary.uploader
 from datetime import timedelta
 
-
-# above as in sample https://github.com/cloudinary/cloudinary-django-sample/blob/master/photo_album/models.py
 
 # followed Django documentation on Model fields for the following
 
@@ -111,11 +107,7 @@ class Item(models.Model):
     )
     categories = models.ManyToManyField(Category)
     description = models.CharField(max_length=1000)
-    image = CloudinaryField(
-        "image",
-        format="jpeg",
-        transformation=[{"width": 1500, "height": 1500, "crop": "limit"}],
-    )
+    image = models.ImageField(upload_to="images/", null=True)
     status = models.DecimalField(
         max_digits=1,
         decimal_places=0,
@@ -128,13 +120,9 @@ class Item(models.Model):
         return self.name + " by " + str(self.seller)
 
 
-# wrapper for CloudinaryField, used for item albums
+# wrapper for ImageField, used for item albums
 class AlbumImage(models.Model):
-    image = CloudinaryField(
-        "image",
-        format="jpeg",
-        transformation=[{"width": 1500, "height": 1500, "crop": "limit"}],
-    )
+    image = models.ImageField(upload_to="images/", null=True)
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="album")
 
     def __str__(self):
@@ -246,11 +234,7 @@ class ItemRequest(models.Model):
     )
     categories = models.ManyToManyField(Category)
     description = models.CharField(max_length=1000)
-    image = CloudinaryField(
-        "image",
-        format="jpeg",
-        transformation=[{"width": 1500, "height": 1500, "crop": "limit"}],
-    )
+    image = models.ImageField(upload_to="images/", null=True)
 
     def __str__(self):
         return self.name + " by " + str(self.requester)
@@ -300,17 +284,17 @@ class ItemRequestFlag(models.Model):
     item_request = models.ForeignKey(ItemRequest, on_delete=models.CASCADE, related_name="flags")
     text = models.CharField(max_length=500, blank=True)
 
-############## DELETE CLOUDINARY IMAGES POST_DELETE ###################
+############## DELETE S3 IMAGES POST_DELETE ###################
 @receiver(post_delete, sender=Item)
 def deleteItemImage(sender, instance, **kwargs):
-    cloudinary.uploader.destroy(str(instance.image))
+    instance.image.delete()
 
 
 @receiver(post_delete, sender=AlbumImage)
 def deleteAlbumImage(sender, instance, **kwargs):
-    cloudinary.uploader.destroy(str(instance.image))
+    instance.image.delete()
 
 
 @receiver(post_delete, sender=ItemRequest)
 def deleteItemRequestImage(sender, instance, **kwargs):
-    cloudinary.uploader.destroy(str(instance.image))
+    instance.image.delete()
