@@ -2,7 +2,7 @@
   <div class="card item-card hover col-12 col-md-4" style="width: 18rem; padding-top: 1%; padding-bottom: 1%;" data-bs-toggle="modal" data-bs-target="#modal{{item_request.pk}}">
     <div class="pic-description" style="background-color: #fff5e6; border-radius:10px">
       <div style="text-align:center; padding-top:6%; padding-bottom:4%" class="card-img-top rounded-corners">
-        {% cloudinary item_request.image format="jpg" width=270 height=200 background="#fff5e6" crop="lpad"%}
+        <img src="{{ item_request.image.url }}" style="max-width: 220px; max-height: 150px; width: auto; height: auto;">
       </div>
       <div style="display:none;" class="item_categories">
         {% for category in item_request.categories.all %}
@@ -77,7 +77,7 @@
               <!--carousel-item active-->
               <div class="carousel-item active">
                 <a style="cursor: zoom-in;" target="_blank" href="{{ item_request.image.url }}">
-                  {% cloudinary item_request.image format="jpg" width=320 height=240 crop="lpad" radius=10%}
+                  <img src="{{ item_request.image.url }}" style="max-width: 220px; max-height: 150px; width: auto; height: auto;">
                 </a>
               </div>
             </div>
