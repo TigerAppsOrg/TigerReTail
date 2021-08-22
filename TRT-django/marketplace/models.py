@@ -3,7 +3,7 @@ from django.forms.widgets import NumberInput
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from django.dispatch import receiver
-from django.db.models.signals import post_delete
+from django.db.models.signals import pre_delete
 from decimal import Decimal
 from datetime import timedelta
 
@@ -284,17 +284,17 @@ class ItemRequestFlag(models.Model):
     item_request = models.ForeignKey(ItemRequest, on_delete=models.CASCADE, related_name="flags")
     text = models.CharField(max_length=500, blank=True)
 
-############## DELETE S3 IMAGES POST_DELETE ###################
-@receiver(post_delete, sender=Item)
+############## DELETE S3 IMAGES PRE_DELETE ###################
+@receiver(pre_delete, sender=Item)
 def deleteItemImage(sender, instance, **kwargs):
     instance.image.delete()
 
 
-@receiver(post_delete, sender=AlbumImage)
+@receiver(pre_delete, sender=AlbumImage)
 def deleteAlbumImage(sender, instance, **kwargs):
     instance.image.delete()
 
 
-@receiver(post_delete, sender=ItemRequest)
+@receiver(pre_delete, sender=ItemRequest)
 def deleteItemRequestImage(sender, instance, **kwargs):
     instance.image.delete()
