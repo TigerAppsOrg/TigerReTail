@@ -15,10 +15,6 @@ from pathlib import Path
 import os
 import dj_database_url
 
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
 import django_heroku
 
 from datetime import timedelta
@@ -49,7 +45,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "marketplace.apps.MarketplaceConfig",
-    "cloudinary",
     "crispy_forms",
     "background_task",
 ]
@@ -144,13 +139,6 @@ CAS_URL = "https://fed.princeton.edu/cas/"
 ALBUM_LIMIT = 5
 MAX_IMAGE_SHAPE = 1024, 1024
 MAX_IMAGE_SIZE = 10485760
-
-# setting up cloudinary image storage
-cloudinary.config(
-    cloud_name="tiger-retail",
-    api_key=os.environ.get("CLOUDINARY_API_KEY"),
-    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
-)
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
