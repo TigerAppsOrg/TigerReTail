@@ -383,13 +383,13 @@
 
     // retrieve and render items repeatedly in a synchronous fashion 
     // (only this function and those it calls should ever touch 'items', 'last_rendered_item_index' to avoid concurrency issues)
-    function populateItemsSynchronously(count, period) {
+    function populateItemsSynchronously(count, period, max_period) {
 
         if (restart) {
             restart = false;
             items = [];
             last_rendered_item_index = -1;
-            window.setTimeout(() => {populateItemsSynchronously(count, period)}, period);
+            window.setTimeout(() => {populateItemsSynchronously(count, period, max_period)}, period);
             return;
         }
 
@@ -420,14 +420,14 @@
                 
                 // notice that setTimeout is called only in callback of fetch, to avoid concurrency issues
                 // (the call to setTimeout in the .catch only occurs if .then doesn't execute)
-                window.setTimeout(() => {populateItemsSynchronously(count, period)}, period);
+                window.setTimeout(() => {populateItemsSynchronously(count, period, max_period)}, data["items"].length === 0 ? max_period : period);
                 return;
             })
             .catch((error) => {
                 if (error instanceof TypeError && error.message === "cancelled") {
                   return console.log(error);
                 }
-                window.setTimeout(() => {populateItemsSynchronously(count, period)}, period);
+                window.setTimeout(() => {populateItemsSynchronously(count, period, max_period)}, period);
                 return console.log(error);
             });
             
@@ -435,7 +435,7 @@
     }
 
     function setup() {
-            window.setTimeout(() => {populateItemsSynchronously(5, 20)}, 0);
+            window.setTimeout(() => {populateItemsSynchronously(20, 20, 2000)}, 0);
         }
 
     $('document').ready(setup);
