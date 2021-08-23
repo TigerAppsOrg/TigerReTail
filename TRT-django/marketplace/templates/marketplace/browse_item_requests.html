@@ -358,7 +358,7 @@
             restart = false;
             item_requests = [];
             last_rendered_item_request_index = -1;
-            window.setTimeout(populateItemRequestsSynchronously(count, period), period);
+            window.setTimeout(() => {populateItemRequestsSynchronously(count, period)}, period);
             return;
         }
 
@@ -389,14 +389,14 @@
                 
                 // notice that setTimeout is called only in callback of fetch, to avoid concurrency issues
                 // (the call to setTimeout in the .catch only occurs if .then doesn't execute)
-                window.setTimeout(populateItemRequestsSynchronously(count, period), period);
+                window.setTimeout(() => {populateItemRequestsSynchronously(count, period)}, period);
                 return;
             })
             .catch((error) => {
                 if (error instanceof TypeError && error.message === "cancelled") {
                   return console.log(error);
                 }
-                window.setTimeout(populateItemRequestsSynchronously(count, period), period);
+                window.setTimeout(() => {populateItemRequestsSynchronously(count, period)}, period);
                 return console.log(error);
             });
             
