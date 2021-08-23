@@ -827,7 +827,7 @@ def contactItem(request, pk):
     send_mail(
         "Received Response to Your Posted Item",
         "Your item '" + item.name + "' has been responded to by a potential buyer, " + account.name + ".\n"
-        + request.build_absolute_uri(reverse("list_items")),
+        + "You can now send direct messages through the inbox. " + request.build_absolute_uri(reverse("inbox")),
         settings.EMAIL_NAME,
         [item.seller.email],
         fail_silently=True,
@@ -1569,7 +1569,7 @@ def contactItemRequest(request, pk):
     send_mail(
         "Received Response to Your Item Request",
         "Your item request '" + item_request.name + "' has been responded to by a potential seller, " + account.name + ".\n"
-        + request.build_absolute_uri(reverse("list_item_requests")),
+        + "You can now send direct messages through the inbox. " + request.build_absolute_uri(reverse("inbox")),
         settings.EMAIL_NAME,
         [item_request.requester.email],
         fail_silently=True,
