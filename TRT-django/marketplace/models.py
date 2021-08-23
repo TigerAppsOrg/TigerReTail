@@ -107,7 +107,7 @@ class Item(models.Model):
     )
     categories = models.ManyToManyField(Category)
     description = models.CharField(max_length=1000)
-    image = models.ImageField(upload_to="images/", null=True)
+    image = models.ImageField(upload_to="images/")
     status = models.DecimalField(
         max_digits=1,
         decimal_places=0,
@@ -122,7 +122,7 @@ class Item(models.Model):
 
 # wrapper for ImageField, used for item albums
 class AlbumImage(models.Model):
-    image = models.ImageField(upload_to="images/", null=True)
+    image = models.ImageField(upload_to="images/")
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="album")
 
     def __str__(self):
@@ -234,7 +234,7 @@ class ItemRequest(models.Model):
     )
     categories = models.ManyToManyField(Category)
     description = models.CharField(max_length=1000)
-    image = models.ImageField(upload_to="images/", null=True)
+    image = models.ImageField(upload_to="images/")
 
     def __str__(self):
         return self.name + " by " + str(self.requester)
