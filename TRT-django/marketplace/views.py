@@ -5,6 +5,7 @@ from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db.models import Window, F, prefetch_related_objects, Q
 from django.db.models.functions import RowNumber
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.core.cache import cache
 from django.conf import settings
@@ -650,7 +651,7 @@ def editItem(request, pk):
 
     # populate the Django model form and validate data
     if request.method == "POST":
-        old_image = item.image
+        old_image_name = item.image.name
         old_deadline = item.deadline
         item_form = ItemForm(request.POST, request.FILES, instance=item)
         if item_form.is_valid():
@@ -662,23 +663,23 @@ def editItem(request, pk):
                     )
                     return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
 
-                # resize lead image
-                image_pil = Image.open(item.image)
-                if image_pil.mode != "RGB":
-                    image_pil = image_pil.convert("RGB")
-                image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+                if item.image.name != old_image_name:
+                    # delete old image
+                    default_storage.delete(old_image_name)
 
-                image_io = BytesIO()
-                image_pil.save(image_io, format='JPEG')
-                image_file = InMemoryUploadedFile(image_io, None, item.name + '_lead.jpg', 'image/jpeg', None, None)
-                item.image = image_file
+                    # resize lead image
+                    image_pil = Image.open(item.image)
+                    if image_pil.mode != "RGB":
+                        image_pil = image_pil.convert("RGB")
+                    image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                    image_io = BytesIO()
+                    image_pil.save(image_io, format='JPEG')
+                    image_file = InMemoryUploadedFile(image_io, None, item.name + '_lead.jpg', 'image/jpeg', None, None)
+                    item.image = image_file
 
                 # save changes to item
                 item_form.save()
-
-                # remove the old image from storage (if different)
-                if item_form.cleaned_data["image"] != old_image:
-                    old_image.delete()
 
                 logItemAction(item, account, "edited")
 
@@ -732,6 +733,7 @@ def editItem(request, pk):
                         )
                         + timedelta(days=1),
                     )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
 
             except Exception as e:
                 messages.error(
@@ -1432,7 +1434,7 @@ def editItemRequest(request, pk):
 
     # populate the Django model form and validate data
     if request.method == "POST":
-        old_image = item_request.image
+        old_image_name = item_request.image.name
         old_deadline = item_request.deadline
         item_request_form = ItemRequestForm(
             request.POST, request.FILES, instance=item_request
@@ -1446,23 +1448,23 @@ def editItemRequest(request, pk):
                     )
                     return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
 
-                # resize lead image
-                image_pil = Image.open(item_request.image)
-                if image_pil.mode != "RGB":
-                    image_pil = image_pil.convert("RGB")
-                image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+                if item_request.image.name != old_image_name:
+                    # delete old image
+                    default_storage.delete(old_image_name)
 
-                image_io = BytesIO()
-                image_pil.save(image_io, format='JPEG')
-                image_file = InMemoryUploadedFile(image_io, None, item_request.name + '_lead.jpg', 'image/jpeg', None, None)
-                item_request.image = image_file
+                    # resize lead image
+                    image_pil = Image.open(item_request.image)
+                    if image_pil.mode != "RGB":
+                        image_pil = image_pil.convert("RGB")
+                    image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                    image_io = BytesIO()
+                    image_pil.save(image_io, format='JPEG')
+                    image_file = InMemoryUploadedFile(image_io, None, item_request.name + '_lead.jpg', 'image/jpeg', None, None)
+                    item_request.image = image_file
 
                 # save changes to item_request
                 item_request_form.save()
-
-                # remove the old image from storage (if different)
-                if item_request_form.cleaned_data["image"] != old_image:
-                    old_image.delete()
 
                 logItemRequestAction(item_request, account, "edited")
                 messages.success(request, "Item request updated.")
@@ -1479,6 +1481,7 @@ def editItemRequest(request, pk):
                         )
                         + timedelta(days=1),
                     )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
             except Exception as e:
                 messages.error(
                     request,
