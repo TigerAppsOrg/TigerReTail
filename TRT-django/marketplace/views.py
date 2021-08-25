@@ -582,7 +582,7 @@ def newItem(request):
 
                         image_io = BytesIO()
                         image_pil.save(image_io, format='JPEG')
-                        image_file = InMemoryUploadedFile(image_io, None, item.name + '_' + str(i+num_already) + '.jpg', 'image/jpeg', None, None)
+                        image_file = InMemoryUploadedFile(image_io, None, item.name + '_' + str(i) + '.jpg', 'image/jpeg', None, None)
                         AlbumImage(image=image_file, item=item).save()
                     except Exception as e:
                         messages.error(
