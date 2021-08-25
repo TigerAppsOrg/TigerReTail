@@ -116,7 +116,7 @@
                             }
                             // sort by date
                             messages.sort((message1, message2) => message1['datetime']-message2['datetime']);
-                            this.setState({get_more_messages: false, loading: false, messages: messages, end_message_pk: data['last_message_pk'], beg_message_pk: data['last_message_pk']}, () => {
+                            this.setState({get_more_messages: false, loading: this.state.clear_messages, messages: messages, end_message_pk: data['last_message_pk'], beg_message_pk: data['last_message_pk']}, () => {
                                 window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                             });
                         })

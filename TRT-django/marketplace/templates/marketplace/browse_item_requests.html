@@ -389,10 +389,15 @@
             .then((resp) => {return resp.json();})
             .then((data) => {
 
+                const item_requests_was_empty = item_requests.length === 0;
+
                 // push item_requests and render
                 item_requests.push(...data["item_requests"]);
                 injectItemRequestsHTML();
-                $('#restart_indicator').addClass('hide');
+
+                if (item_requests_was_empty) {
+                  $('#restart_indicator').addClass('hide');
+                }
                 
                 // notice that setTimeout is called only in callback of fetch, to avoid concurrency issues
                 // (the call to setTimeout in the .catch only occurs if .then doesn't execute)
