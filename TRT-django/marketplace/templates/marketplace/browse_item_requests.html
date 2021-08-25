@@ -5,7 +5,7 @@
     <div class="row justify-content-around">
         <div class="col-5">
             <div class="input-group rounded">
-              <input type="search" id="searchbar" oninput="updateQuery()" placeholder="Search" class="form-control" />
+              <input type="search" id="searchbar" oninput="updateQuery()" placeholder="Sort by Search" class="form-control" />
               <button class="btn btn-secondary"><i class=" fa fa-search"></i></button>
             </div>
         </div>
@@ -103,6 +103,11 @@
       </div>
 
       <div class="col-sm-10 px-4" style="height: 70vh; overflow-y: auto;">
+        <div class="row mx-2 my-4" id="restart_indicator">
+          <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
         <div class="row" id="results"></div>
       </div>
 
@@ -146,6 +151,7 @@
 
         search_string = $("#searchbar").val();
         restart = true; // trigger a clear of the item_requests array, since query parameters have changed
+        $('#restart_indicator').removeClass('hide');
     }
 
     // generates and injects new item_request HTML elements, updates 'last_rendered_item_request_index'
@@ -386,6 +392,7 @@
                 // push item_requests and render
                 item_requests.push(...data["item_requests"]);
                 injectItemRequestsHTML();
+                $('#restart_indicator').addClass('hide');
                 
                 // notice that setTimeout is called only in callback of fetch, to avoid concurrency issues
                 // (the call to setTimeout in the .catch only occurs if .then doesn't execute)

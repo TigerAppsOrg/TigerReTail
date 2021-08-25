@@ -5,7 +5,7 @@
     <div class="row justify-content-around">
         <div class="col-5">
             <div class="input-group rounded">
-              <input type="search" id="searchbar" oninput="updateQuery()" placeholder="Search" class="form-control" />
+              <input type="search" id="searchbar" oninput="updateQuery()" placeholder="Sort by Search" class="form-control" />
               <button class="btn btn-secondary"><i class=" fa fa-search"></i></button>
             </div>
         </div>
@@ -103,6 +103,11 @@
       </div>
 
       <div class="col-sm-10 px-4" style="height: 70vh; overflow-y: auto;">
+        <div class="row mx-2 my-4" id="restart_indicator">
+          <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
         <div class="row" id="results"></div>
       </div>
 
@@ -128,7 +133,7 @@
 
     let new_purchase_url = '{% url "new_purchase" %}';
     let csrf_token = '{% csrf_token %}';
-    
+
 
     // set active_category_pks, active_condition_indexes, search_string appropriately
     // based on current inputs
@@ -149,6 +154,7 @@
 
         search_string = $("#searchbar").val();
         restart = true; // trigger a clear of the items array, since query parameters have changed
+        $('#restart_indicator').removeClass('hide');
     }
 
     // generates and injects new item HTML elements, updates 'last_rendered_item_index'
@@ -417,6 +423,7 @@
                 // push items and render
                 items.push(...data["items"]);
                 injectItemsHTML();
+                $('#restart_indicator').addClass('hide');
                 
                 // notice that setTimeout is called only in callback of fetch, to avoid concurrency issues
                 // (the call to setTimeout in the .catch only occurs if .then doesn't execute)
