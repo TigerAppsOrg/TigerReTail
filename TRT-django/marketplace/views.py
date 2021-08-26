@@ -2281,6 +2281,19 @@ def editAccount(request):
 
 # ----------------------------------------------------------------------
 
+# set account.remind_set_email_settings to False
+
+
+@authentication_required
+def stopAccountEmailSettingsReminder(request):
+    account = Account.objects.get(username=request.session.get("username"))
+    account.remind_set_email_settings = False
+    account.save()
+    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+
+# ----------------------------------------------------------------------
+
 
 @authentication_required
 def verifyEmail(request, token):

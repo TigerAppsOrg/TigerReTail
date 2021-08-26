@@ -48,6 +48,7 @@ urlpatterns = [
     path("notifications/see/", views.seeNotifications, name="see_notifications"),
     path("account/activity/", views.accountActivity, name="account_activity"),
     path("account/edit/", views.editAccount, name="edit_account"),
+    path("account/edit/stop_email_settings_reminder/", views.stopAccountEmailSettingsReminder, name="stop_email_settings_reminder"),
     path("account/login/", views.editAccount, name="login"),
     path("account/logout/", views.logout, name="logout"),
     path("account/email/verify/<str:token>/", views.verifyEmail, name="verify_email"),
