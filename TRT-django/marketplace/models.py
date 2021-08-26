@@ -18,6 +18,9 @@ class Account(models.Model):
     email = models.EmailField()
     contact = models.CharField(max_length=200)
     contacts = models.ManyToManyField("self")
+    email_activity = models.BooleanField(default=False)          # receive email about any activity
+    email_unread_notification = models.BooleanField(default=True) # receive email about unread notification
+    remind_set_email_settings = models.BooleanField(default=True)
 
     def __str__(self):
         return self.username
