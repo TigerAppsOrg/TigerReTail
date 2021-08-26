@@ -131,16 +131,9 @@ def notifyEmailSparsely(pk, email, url):
 
 
 def notify(account, text, url, sparse=False, timeout=timedelta(minutes=5)):
-    if not sparse:
-        Notification(
-            account=account,
-            datetime=timezone.now(),
-            text=text,
-            seen=False,
-            url=url,
-        ).save()
-        return
-    else:
+    
+    # if sparse and recent unseen notification with same text already exists, do nothing
+    if sparse:
         if Notification.objects.filter(account=account, text=text, seen=False).exists():
             duplicates = Notification.objects.filter(
                 account=account, text=text, seen=False
@@ -149,28 +142,25 @@ def notify(account, text, url, sparse=False, timeout=timedelta(minutes=5)):
             if timezone.now() < recent.datetime + timeout:
                 return
 
-        should_email = False
-        if not Notification.objects.filter(
-            account=account, text=text, seen=False
-        ).exists():
-            should_email = True
-        notification = Notification(
-            account=account,
-            datetime=timezone.now(),
-            text=text,
-            seen=False,
+    # otherwise, should notify and schedule an email if first unseen notification
+    should_email = not Notification.objects.filter(account=account, seen=False).exists()
+    notification = Notification(
+        account=account,
+        datetime=timezone.now(),
+        text=text,
+        seen=False,
+        url=url,
+    )
+    notification.save()
+
+    # if the oldest unseen notification is the one just created,
+    # then delay-sparse send an email (delayed to allow user to see notification and prevent the email)
+    if should_email and account.email_unread_notification:
+        notifyEmailSparsely(
+            pk=notification.pk,
+            email=account.email,
             url=url,
         )
-        notification.save()
-
-        # if the oldest unseen notification is the one just created,
-        # then delay-sparse send an email (delayed to allow user to see notification and prevent the email)
-        if should_email and account.email_unread_notification:
-            notifyEmailSparsely(
-                pk=notification.pk,
-                email=account.email,
-                url=url,
-            )
 
 
 # ----------------------------------------------------------------------
