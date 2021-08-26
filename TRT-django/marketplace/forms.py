@@ -72,11 +72,15 @@ class AccountForm(forms.ModelForm):
             "name",
             "email",
             "contact",
+            "email_activity",
+            "email_unread_notification",
         ]
         labels = {
             "name": "",
             "email": "",
             "contact": "",
+            "email_activity": "",
+            "email_unread_notification": "",
         }
         widgets = {
             "name": forms.TextInput(attrs={"class": "only-round-right"}),
