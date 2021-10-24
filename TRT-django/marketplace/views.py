@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db.models import Window, F, prefetch_related_objects, Q
 from django.db.models.functions import RowNumber
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.core.cache import cache
 from django.conf import settings
@@ -27,10 +29,6 @@ from .forms import AccountForm, ItemForm, ItemRequestForm, ItemFlagForm, ItemReq
 from utils import CASClient
 from datetime import timedelta
 
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
 from django.core.exceptions import PermissionDenied
 import secrets
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
@@ -40,6 +38,9 @@ from sys import stderr
 
 from background_task import background
 from datetime import date, datetime
+
+from io import BytesIO
+from PIL import Image
 
 # ----------------------------------------------------------------------
 
@@ -92,6 +93,21 @@ def logItemRequestAction(item_request, account, log):
 
 # ----------------------------------------------------------------------
 
+# helper method to send email about activity, conditionally on account settings
+
+
+def send_mail_activity(subject, body, senderEmail, receiverAccounts, fail_silently):
+    send_mail(
+        subject,
+        body + "\n\nYou can change your email notification settings here: https://retail.tigerapps.org/account/edit/",
+        senderEmail,
+        [receiverAccount.email for receiverAccount in receiverAccounts if receiverAccount.email_activity],
+        fail_silently=fail_silently,
+    )
+
+
+# ----------------------------------------------------------------------
+
 # helper method to send new notification email delayed and sparsely
 # namely, if the notification is seen by the time to send, will not send
 
@@ -102,7 +118,7 @@ def notifyEmailSparsely(pk, email, url):
     if not notification.seen:
         send_mail(
             "Unread Notification(s) on Tiger ReTail",
-            "You have new notification(s) waiting to be read.\n" + url,
+            "You have new notification(s) waiting to be read.\n" + url + "\n\nYou can change your email notification settings here: https://retail.tigerapps.org/account/edit/",
             settings.EMAIL_NAME,
             [email],
             fail_silently=True,
@@ -115,16 +131,9 @@ def notifyEmailSparsely(pk, email, url):
 
 
 def notify(account, text, url, sparse=False, timeout=timedelta(minutes=5)):
-    if not sparse:
-        Notification(
-            account=account,
-            datetime=timezone.now(),
-            text=text,
-            seen=False,
-            url=url,
-        ).save()
-        return
-    else:
+    
+    # if sparse and recent unseen notification with same text already exists, do nothing
+    if sparse:
         if Notification.objects.filter(account=account, text=text, seen=False).exists():
             duplicates = Notification.objects.filter(
                 account=account, text=text, seen=False
@@ -133,28 +142,25 @@ def notify(account, text, url, sparse=False, timeout=timedelta(minutes=5)):
             if timezone.now() < recent.datetime + timeout:
                 return
 
-        should_email = False
-        if not Notification.objects.filter(
-            account=account, text=text, seen=False
-        ).exists():
-            should_email = True
-        notification = Notification(
-            account=account,
-            datetime=timezone.now(),
-            text=text,
-            seen=False,
+    # otherwise, should notify and schedule an email if first unseen notification
+    should_email = not Notification.objects.filter(account=account, seen=False).exists()
+    notification = Notification(
+        account=account,
+        datetime=timezone.now(),
+        text=text,
+        seen=False,
+        url=url,
+    )
+    notification.save()
+
+    # if the oldest unseen notification is the one just created,
+    # then delay-sparse send an email (delayed to allow user to see notification and prevent the email)
+    if should_email and account.email_unread_notification:
+        notifyEmailSparsely(
+            pk=notification.pk,
+            email=account.email,
             url=url,
         )
-        notification.save()
-
-        # if the oldest unseen notification is the one just created,
-        # then delay-sparse send an email (delayed to allow user to see notification and prevent the email)
-        if should_email:
-            notifyEmailSparsely(
-                pk=notification.pk,
-                email=account.email,
-                url=url,
-            )
 
 
 # ----------------------------------------------------------------------
@@ -171,22 +177,22 @@ def expiredItemNotice(pk):
         return
 
     # send notices
-    send_mail(
+    send_mail_activity(
         "Your Posted Item has Expired",
-        "Your posted item "
+        "Your posted item '"
         + item.name
-        + " has expired.\nPlease edit your item deadline if you would like to prevent your item from being removed.\nItems are removed "
+        + "' has expired.\nPlease edit your item deadline if you would like to prevent your item from being removed.\nItems are removed "
         + str(settings.EXPIRATION_BUFFER)
         + " after their deadlines.",
         settings.EMAIL_NAME,
-        [item.seller.email],
+        [item.seller],
         fail_silently=True,
     )
     notify(
         item.seller,
-        "Your item "
+        "Your item '"
         + item.name
-        + " has expired. Please edit its deadline if you do not want it removed.",
+        + "' has expired. Please edit its deadline if you do not want it removed.",
         reverse("list_items"),
     )
 
@@ -205,22 +211,22 @@ def expiredItemRequestNotice(pk):
         return
 
     # send notices
-    send_mail(
+    send_mail_activity(
         "Your Posted Item Request has Expired",
-        "Your posted item request for "
+        "Your posted item request for '"
         + item_request.name
-        + " has expired.\nPlease edit your item request deadline if you would like to prevent your item request from being removed.\nItem requests are removed "
+        + "' has expired.\nPlease edit your item request deadline if you would like to prevent your item request from being removed.\nItem requests are removed "
         + str(settings.EXPIRATION_BUFFER)
         + " after their deadlines.",
         settings.EMAIL_NAME,
-        [item_request.requester.email],
+        [item_request.requester],
         fail_silently=True,
     )
     notify(
         item_request.requester,
-        "Your item request "
+        "Your item request '"
         + item_request.name
-        + " has expired. Please edit its deadline if you do not want it removed.",
+        + "' has expired. Please edit its deadline if you do not want it removed.",
         reverse("list_item_requests"),
     )
 
@@ -537,6 +543,24 @@ def newItem(request):
             item.seller = account
             item.posted_date = timezone.now()
             item.status = Item.AVAILABLE
+            if item.image.size > settings.MAX_IMAGE_SIZE:
+                messages.error(
+                    request,
+                    "Could not save lead image, since it is > 10MB."
+                )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+            # resize lead image
+            image_pil = Image.open(item.image)
+            if image_pil.mode != "RGB":
+                image_pil = image_pil.convert("RGB")
+            image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+            image_io = BytesIO()
+            image_pil.save(image_io, format='JPEG')
+            image_file = InMemoryUploadedFile(image_io, None, item.name + '_lead.jpg', 'image/jpeg', None, None)
+            item.image = image_file
+
             try:
                 item.save()
                 # save the m2m fields, which did not yet bc of commit=False
@@ -549,7 +573,22 @@ def newItem(request):
                     if i >= settings.ALBUM_LIMIT:
                         break
                     try:
-                        AlbumImage(image=album[i], item=item).save()
+                        if album[i].size > settings.MAX_IMAGE_SIZE:
+                            messages.error(
+                                request,
+                                "Could not save album image, since it is > 10MB."
+                            )
+                            return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+                        
+                        image_pil = Image.open(album[i])
+                        if image_pil.mode != "RGB":
+                            image_pil = image_pil.convert("RGB")
+                        image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                        image_io = BytesIO()
+                        image_pil.save(image_io, format='JPEG')
+                        image_file = InMemoryUploadedFile(image_io, None, item.name + '_' + str(i) + '.jpg', 'image/jpeg', None, None)
+                        AlbumImage(image=image_file, item=item).save()
                     except Exception as e:
                         messages.error(
                             request,
@@ -559,12 +598,12 @@ def newItem(request):
 
                 messages.success(request, "New item posted.")
                 # send confirmation email
-                send_mail(
+                send_mail_activity(
                     "Item Posted",
-                    "You have posted a new item for sale!\n"
+                    "You have posted your new item '" + item.name + "' for sale!\n"
                     + request.build_absolute_uri(reverse("list_items")),
                     settings.EMAIL_NAME,
-                    [account.email],
+                    [account],
                     fail_silently=True,
                 )
                 # schedule expiration notice
@@ -617,17 +656,35 @@ def editItem(request, pk):
 
     # populate the Django model form and validate data
     if request.method == "POST":
-        old_image = item.image
+        old_image_name = item.image.name
         old_deadline = item.deadline
         item_form = ItemForm(request.POST, request.FILES, instance=item)
         if item_form.is_valid():
             try:
+                if item.image.size > settings.MAX_IMAGE_SIZE:
+                    messages.error(
+                        request,
+                        "Could not save lead image, since it is > 10MB."
+                    )
+                    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+                if item.image.name != old_image_name:
+                    # delete old image
+                    default_storage.delete(old_image_name)
+
+                    # resize lead image
+                    image_pil = Image.open(item.image)
+                    if image_pil.mode != "RGB":
+                        image_pil = image_pil.convert("RGB")
+                    image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                    image_io = BytesIO()
+                    image_pil.save(image_io, format='JPEG')
+                    image_file = InMemoryUploadedFile(image_io, None, item.name + '_lead.jpg', 'image/jpeg', None, None)
+                    item.image = image_file
+
                 # save changes to item
                 item_form.save()
-
-                # remove the old image from storage (if different)
-                if item_form.cleaned_data["image"] != old_image:
-                    cloudinary.uploader.destroy(str(old_image))
 
                 logItemAction(item, account, "edited")
 
@@ -643,7 +700,22 @@ def editItem(request, pk):
                         if i + num_already >= settings.ALBUM_LIMIT:
                             break
                         try:
-                            AlbumImage(image=album[i], item=item).save()
+                            if album[i].size > settings.MAX_IMAGE_SIZE:
+                                messages.error(
+                                    request,
+                                    "Could not save album image, since it is > 10MB."
+                                )
+                                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+                            
+                            image_pil = Image.open(album[i])
+                            if image_pil.mode != "RGB":
+                                image_pil = image_pil.convert("RGB")
+                            image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                            image_io = BytesIO()
+                            image_pil.save(image_io, format='JPEG')
+                            image_file = InMemoryUploadedFile(image_io, None, item.name + '_' + str(i+num_already) + '.jpg', 'image/jpeg', None, None)
+                            AlbumImage(image=image_file, item=item).save()
                         except Exception as e:
                             messages.error(
                                 request,
@@ -666,6 +738,7 @@ def editItem(request, pk):
                         )
                         + timedelta(days=1),
                     )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
 
             except Exception as e:
                 messages.error(
@@ -701,18 +774,81 @@ def deleteItem(request, pk):
         messages.warning(request, "Cannot delete an item in the unavailable state.")
         return redirect("list_items")
 
+    item_name = item.name
     item.delete()
     messages.success(request, "Item deleted.")
     # send confirmation email
-    send_mail(
+    send_mail_activity(
         "Item Deleted",
-        "You have removed an item for sale.\n"
+        "You have removed your item '" + item_name + "' from sale.\n"
         + request.build_absolute_uri((reverse("list_items"))),
         settings.EMAIL_NAME,
-        [account.email],
+        [account],
         fail_silently=True,
     )
     return redirect("list_items")
+
+
+# ----------------------------------------------------------------------
+
+# contact the seller of an item
+
+
+@authentication_required
+def contactItem(request, pk):
+    account = Account.objects.get(username=request.session.get("username"))
+
+    try:
+        item = Item.objects.get(pk=pk)
+    except:
+        return HttpResponse(status=400)
+
+    # cannot contact your own item
+    if item.seller == account:
+        # rejected
+        messages.warning(
+            request, "Cannot respond to an item you posted yourself."
+        )
+        return redirect("gallery")
+
+    # create a contact and set log
+    account.contacts.add(item.seller)  # (m2m goes both ways)
+    # notify the seller
+    notify(
+        item.seller,
+        account.name
+        + " has connected with you regarding your item. You can now send direct messages through the inbox regarding your item '"
+        + item.name + "'",
+        request.build_absolute_uri(reverse("inbox")),
+    )
+    # notify the contacter
+    notify(
+        account,
+        item.seller.name
+        + " has been added as a contact. You can now send direct messages through the inbox regarding the item '"
+        + item.name + "'",
+        request.build_absolute_uri(reverse("inbox")),
+    )
+    send_mail_activity(
+        "Received Response to Your Posted Item",
+        "Your item '" + item.name + "' has been responded to by a potential buyer, " + account.name + ".\n"
+        + "You can now send direct messages through the inbox. " + request.build_absolute_uri(reverse("inbox")),
+        settings.EMAIL_NAME,
+        [item.seller],
+        fail_silently=True,
+    )
+    # create an item log, which will be used to list the item history for the seller
+    logItemAction(item, account, "contact")
+    messages.success(
+        request,
+        "You can directly message "
+        + item.seller.name
+        + " about the item '"
+        + item.name
+        + "' through the inbox!",
+    )
+
+    return redirect("inbox")
 
 
 # ----------------------------------------------------------------------
@@ -773,27 +909,27 @@ def newPurchase(request):
     messages.success(request, "Purchase started!")
 
     # send confirmation email
-    send_mail(
+    send_mail_activity(
         "Purchase Requested",
-        "You have requested to purchase an item.\n"
+        "You have requested to purchase the item '" + item.name + "' from " + item.seller.name + ".\n"
         + request.build_absolute_uri(reverse("list_purchases")),
         settings.EMAIL_NAME,
-        [account.email],
+        [account],
         fail_silently=True,
     )
     # send notification email to seller
-    send_mail(
+    send_mail_activity(
         "Sale Requested by a Buyer",
-        "Your item has been requested for sale!\n"
+        "Your item '" + item.name + "' has been requested for sale by " + account.name + "!\n"
         + request.build_absolute_uri(reverse("list_items")),
         settings.EMAIL_NAME,
-        [item.seller.email],
+        [item.seller],
         fail_silently=True,
     )
     # notify the seller
     notify(
         item.seller,
-        account.name + " has requested to purchase " + item.name,
+        account.name + " has requested to purchase '" + item.name + "'",
         request.build_absolute_uri(reverse("list_items")),
     )
 
@@ -837,29 +973,29 @@ def confirmPurchase(request, pk):
         logTransactionAction(purchase, account, "confirmed")
         messages.success(request, "Purchase confirmed, awaiting seller confirmation.")
         # send confirmation emails
-        send_mail(
+        send_mail_activity(
             "Purchase Confirmed",
-            "You have confirmed a purchase.\n"
+            "You have confirmed your purchase of '" + purchase.item.name + "' from " + purchase.item.seller.name + ".\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
-            [account.email],
+            [account],
             fail_silently=True,
         )
-        send_mail(
+        send_mail_activity(
             "Sale Awaiting Confirmation",
-            "Your sale has been confirmed by the buyer and awaits your confirmation.\n"
+            "Your sale of '" + purchase.item.name + "' has been confirmed by " + account.name + " and awaits your confirmation.\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
-            [purchase.item.seller.email],
+            [purchase.item.seller],
             fail_silently=True,
         )
         # notify the seller
         notify(
             purchase.item.seller,
             account.name
-            + " has confirmed the purchase of "
+            + " has confirmed the purchase of '"
             + purchase.item.name
-            + " and awaits your confirmation",
+            + "' and awaits your confirmation",
             request.build_absolute_uri(reverse("list_items")),
         )
 
@@ -874,26 +1010,26 @@ def confirmPurchase(request, pk):
         logTransactionAction(purchase, account, "confirmed and completed")
         messages.success(request, "Purchase confirmed by both parties and completed.")
         # send confirmation emails
-        send_mail(
+        send_mail_activity(
             "Purchase Completed",
-            "Your purchase has been completed.\n"
+            "Your purchase of '" + item.name + "' from " + item.seller.name + " has been completed.\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
-            [account.email],
+            [account],
             fail_silently=True,
         )
-        send_mail(
+        send_mail_activity(
             "Sale Completed",
-            "Your sale has been confirmed by the buyer and is completed.\n"
+            "Your sale of '" + item.name + "' has been confirmed by " + account.name + " and is completed.\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
-            [item.seller.email],
+            [item.seller],
             fail_silently=True,
         )
         # notify the seller
         notify(
             item.seller,
-            account.name + " has confirmed and completed the purchase of " + item.name,
+            account.name + " has confirmed and completed the purchase of '" + item.name + "'",
             request.build_absolute_uri(reverse("list_items")),
         )
 
@@ -935,26 +1071,26 @@ def cancelPurchase(request, pk):
         logTransactionAction(purchase, account, "cancelled")
         messages.success(request, "Purchase cancelled.")
         # send confirmation emails
-        send_mail(
+        send_mail_activity(
             "Purchase Cancelled",
-            "You have cancelled a purchase.\n"
+            "You have cancelled your purchase of '" + item.name + "' from " + item.seller.name + ".\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
-            [account.email],
+            [account],
             fail_silently=True,
         )
-        send_mail(
+        send_mail_activity(
             "Sale Cancelled by Buyer",
-            "Your sale has been cancelled by the buyer.\n"
+            "Your sale of '" + item.name + "' has been cancelled by " + account.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
-            [item.seller.email],
+            [item.seller],
             fail_silently=True,
         )
         # notify the seller
         notify(
             item.seller,
-            account.name + " has cancelled the purchase of " + item.name,
+            account.name + " has cancelled the purchase of '" + item.name + "'",
             request.build_absolute_uri(reverse("list_items")),
         )
 
@@ -989,39 +1125,39 @@ def acceptSale(request, pk):
         notify(
             sale.buyer,
             account.name
-            + " has connected with you. You can now send direct messages to the seller through the inbox regarding "
-            + sale.item.name,
+            + " has connected with you. You can now send direct messages to the seller through the inbox regarding '"
+            + sale.item.name + "'",
             request.build_absolute_uri(reverse("inbox")),
         )
         # notify the seller
         notify(
             account,
             sale.buyer.name
-            + " has been added as a contact. You can now send direct messages to the buyer through the inbox regarding "
-            + sale.item.name,
+            + " has been added as a contact. You can now send direct messages to the buyer through the inbox regarding '"
+            + sale.item.name + "'",
             request.build_absolute_uri(reverse("inbox")),
         )
         # send confirmation email
-        send_mail(
+        send_mail_activity(
             "Sale Accepted",
-            "You have accepted a sale request.\n"
+            "You have accepted a sale request for '" + sale.item.name + "' from " + sale.buyer.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
-            [account.email],
+            [account],
             fail_silently=True,
         )
-        send_mail(
+        send_mail_activity(
             "Purchase Request Accepted by Seller",
-            "Your purchase request has been accepted by the seller.\n"
+            "Your purchase request for '" + sale.item.name + "' has been accepted by " + account.name + ".\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
-            [sale.buyer.email],
+            [sale.buyer],
             fail_silently=True,
         )
         # notify the buyer
         notify(
             sale.buyer,
-            account.name + " has accepted your purchase request for " + sale.item.name,
+            account.name + " has accepted your purchase request for '" + sale.item.name + "'",
             request.build_absolute_uri(reverse("list_purchases")),
         )
 
@@ -1065,29 +1201,29 @@ def confirmSale(request, pk):
         logTransactionAction(sale, account, "confirmed")
         messages.success(request, "Sale confirmed, awaiting buyer confirmation.")
         # send confirmation email
-        send_mail(
+        send_mail_activity(
             "Sale Confirmed",
-            "You have confirmed a sale.\n"
+            "You have confirmed your sale of '" + sale.item.name + "' to " + sale.buyer.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
-            [account.email],
+            [account],
             fail_silently=True,
         )
-        send_mail(
+        send_mail_activity(
             "Purchase Awaiting Confirmation",
-            "Your purchase has been confirmed by the seller and awaits your confirmation\n"
+            "Your purchase of '" + sale.item.name + "' has been confirmed by " + account.name + " and awaits your confirmation\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
-            [sale.buyer.email],
+            [sale.buyer],
             fail_silently=True,
         )
         # notify the buyer
         notify(
             sale.buyer,
             account.name
-            + " has confirmed your purchase of "
+            + " has confirmed your purchase of '"
             + sale.item.name
-            + " and awaits your confirmation",
+            + "' and awaits your confirmation",
             request.build_absolute_uri(reverse("list_purchases")),
         )
 
@@ -1102,28 +1238,28 @@ def confirmSale(request, pk):
         logTransactionAction(sale, account, "confirmed and completed")
         messages.success(request, "Sale confirmed by both parties and completed.")
         # send confirmation email
-        send_mail(
+        send_mail_activity(
             "Sale Completed",
-            "You have confirmed and completed your sale.\n"
+            "You have confirmed and completed your sale of '" + sale.item.name + "' to " + sale.buyer.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
-            [account.email],
+            [account],
             fail_silently=True,
         )
-        send_mail(
+        send_mail_activity(
             "Purchase Completed",
-            "Your purchase has been confirmed by the seller and is completed.\n"
+            "Your purchase of '" + sale.item.name + "' has been confirmed by " + account.name + " and is completed.\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
-            [sale.buyer.email],
+            [sale.buyer],
             fail_silently=True,
         )
         # notify the buyer
         notify(
             sale.buyer,
             account.name
-            + " has confirmed and completed your purchase of "
-            + sale.item.name,
+            + " has confirmed and completed your purchase of '"
+            + sale.item.name + "'",
             request.build_absolute_uri(reverse("list_purchases")),
         )
 
@@ -1164,26 +1300,26 @@ def cancelSale(request, pk):
         logTransactionAction(sale, account, "cancelled")
         messages.success(request, "Sale cancelled.")
         # send confirmation email
-        send_mail(
+        send_mail_activity(
             "Sale Cancelled",
-            "You have cancelled a sale.\n"
+            "You have cancelled your sale of '" + sale.item.name + "' to " + sale.buyer.name + ".\n"
             + request.build_absolute_uri(reverse("list_items")),
             settings.EMAIL_NAME,
-            [account.email],
+            [account],
             fail_silently=True,
         )
-        send_mail(
+        send_mail_activity(
             "Purchase Cancelled by Seller",
-            "Your purchase has been cancelled by the seller.\n"
+            "Your purchase of '" + sale.item.name + "' has been cancelled by " + account.name + ".\n"
             + request.build_absolute_uri(reverse("list_purchases")),
             settings.EMAIL_NAME,
-            [sale.buyer.email],
+            [sale.buyer],
             fail_silently=True,
         )
         # notify the buyer
         notify(
             sale.buyer,
-            account.name + " has cancelled your purchase of " + sale.item.name,
+            account.name + " has cancelled your purchase of '" + sale.item.name + "'",
             request.build_absolute_uri(reverse("list_purchases")),
         )
 
@@ -1223,6 +1359,24 @@ def newItemRequest(request):
             item_request = item_request_form.save(commit=False)
             item_request.requester = account
             item_request.posted_date = timezone.now()
+            if item_request.image.size > settings.MAX_IMAGE_SIZE:
+                messages.error(
+                    request,
+                    "Could not save lead image, since it is > 10MB."
+                )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+            # resize lead image
+            image_pil = Image.open(item_request.image)
+            if image_pil.mode != "RGB":
+                image_pil = image_pil.convert("RGB")
+            image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+            image_io = BytesIO()
+            image_pil.save(image_io, format='JPEG')
+            image_file = InMemoryUploadedFile(image_io, None, item_request.name + '_lead.jpg', 'image/jpeg', None, None)
+            item_request.image = image_file
+
             try:
                 item_request.save()
                 # save the m2m fields, which did not yet bc of commit=False
@@ -1231,12 +1385,12 @@ def newItemRequest(request):
                 logItemRequestAction(item_request, account, "created")
                 messages.success(request, "New item request posted.")
                 # send confirmation email
-                send_mail(
+                send_mail_activity(
                     "Item Request Posted",
-                    "You have posted a new item request!\n"
+                    "You have posted a new item request for '" + item_request.name + "'!\n"
                     + request.build_absolute_uri(reverse("list_item_requests")),
                     settings.EMAIL_NAME,
-                    [account.email],
+                    [account],
                     fail_silently=True,
                 )
                 # schedule expiration notice
@@ -1285,19 +1439,37 @@ def editItemRequest(request, pk):
 
     # populate the Django model form and validate data
     if request.method == "POST":
-        old_image = item_request.image
+        old_image_name = item_request.image.name
         old_deadline = item_request.deadline
         item_request_form = ItemRequestForm(
             request.POST, request.FILES, instance=item_request
         )
         if item_request_form.is_valid():
             try:
+                if item_request.image.size > settings.MAX_IMAGE_SIZE:
+                    messages.error(
+                        request,
+                        "Could not save lead image, since it is > 10MB."
+                    )
+                    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+                if item_request.image.name != old_image_name:
+                    # delete old image
+                    default_storage.delete(old_image_name)
+
+                    # resize lead image
+                    image_pil = Image.open(item_request.image)
+                    if image_pil.mode != "RGB":
+                        image_pil = image_pil.convert("RGB")
+                    image_pil.thumbnail(settings.MAX_IMAGE_SHAPE)
+
+                    image_io = BytesIO()
+                    image_pil.save(image_io, format='JPEG')
+                    image_file = InMemoryUploadedFile(image_io, None, item_request.name + '_lead.jpg', 'image/jpeg', None, None)
+                    item_request.image = image_file
+
                 # save changes to item_request
                 item_request_form.save()
-
-                # remove the old image from storage (if different)
-                if item_request_form.cleaned_data["image"] != old_image:
-                    cloudinary.uploader.destroy(str(old_image))
 
                 logItemRequestAction(item_request, account, "edited")
                 messages.success(request, "Item request updated.")
@@ -1314,6 +1486,7 @@ def editItemRequest(request, pk):
                         )
                         + timedelta(days=1),
                     )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
             except Exception as e:
                 messages.error(
                     request,
@@ -1343,15 +1516,16 @@ def deleteItemRequest(request, pk):
     if item_request.requester != account:
         raise PermissionDenied
 
+    item_request_name = item_request.name
     item_request.delete()
     messages.success(request, "Item request deleted.")
     # send confirmation email
-    send_mail(
+    send_mail_activity(
         "Item Request Deleted",
-        "You have removed an item request.\n"
+        "You have removed your item request for '" + item_request_name + "'.\n"
         + request.build_absolute_uri((reverse("list_item_requests"))),
         settings.EMAIL_NAME,
-        [account.email],
+        [account],
         fail_silently=True,
     )
     return redirect("list_item_requests")
@@ -1365,7 +1539,11 @@ def deleteItemRequest(request, pk):
 @authentication_required
 def contactItemRequest(request, pk):
     account = Account.objects.get(username=request.session.get("username"))
-    item_request = ItemRequest.objects.get(pk=pk)
+
+    try:
+        item_request = ItemRequest.objects.get(pk=pk)
+    except:
+        return HttpResponse(status=400)
 
     # cannot contact your own item_request
     if item_request.requester == account:
@@ -1381,24 +1559,24 @@ def contactItemRequest(request, pk):
     notify(
         item_request.requester,
         account.name
-        + " has connected with you regarding your item request. You can now send direct messages through the inbox regarding your request for "
-        + item_request.name,
+        + " has connected with you regarding your item request. You can now send direct messages through the inbox regarding your request for '"
+        + item_request.name + "'",
         request.build_absolute_uri(reverse("inbox")),
     )
     # notify the contacter
     notify(
         account,
         item_request.requester.name
-        + " has been added as a contact. You can now send direct messages through the inbox regarding the request for "
-        + item_request.name,
+        + " has been added as a contact. You can now send direct messages through the inbox regarding the request for '"
+        + item_request.name + "'",
         request.build_absolute_uri(reverse("inbox")),
     )
-    send_mail(
+    send_mail_activity(
         "Received Response to Your Item Request",
-        "Your item request has been responded to by a potential seller.\n"
-        + request.build_absolute_uri(reverse("list_item_requests")),
+        "Your item request '" + item_request.name + "' has been responded to by a potential seller, " + account.name + ".\n"
+        + "You can now send direct messages through the inbox. " + request.build_absolute_uri(reverse("inbox")),
         settings.EMAIL_NAME,
-        [item_request.requester.email],
+        [item_request.requester],
         fail_silently=True,
     )
     # create an item request log, which will be used to list the item request history for the requester
@@ -1407,12 +1585,12 @@ def contactItemRequest(request, pk):
         request,
         "You can directly message "
         + item_request.requester.name
-        + " about the request for "
+        + " about the request for '"
         + item_request.name
-        + " through the inbox!",
+        + "' through the inbox!",
     )
 
-    return redirect("browse_item_requests")
+    return redirect("inbox")
 
 
 # ----------------------------------------------------------------------
@@ -2093,6 +2271,19 @@ def editAccount(request):
 
 # ----------------------------------------------------------------------
 
+# set account.remind_set_email_settings to False
+
+
+@authentication_required
+def stopAccountEmailSettingsReminder(request):
+    account = Account.objects.get(username=request.session.get("username"))
+    account.remind_set_email_settings = False
+    account.save()
+    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+
+# ----------------------------------------------------------------------
+
 
 @authentication_required
 def verifyEmail(request, token):
@@ -2187,19 +2378,19 @@ def deleteExpired():
     for item in expired_items:
         if item.status == Item.AVAILABLE:
             # send email notice
-            send_mail(
+            send_mail_activity(
                 "Expired Item Removed",
-                "Your expired item "
+                "Your expired item '"
                 + item.name
-                + " has been removed.\nIf you would still like to sell your item, please feel free to relist it.",
+                + "' has been removed.\nIf you would still like to sell your item, please feel free to relist it.",
                 settings.EMAIL_NAME,
-                [item.seller.email],
+                [item.seller],
                 fail_silently=True,
             )
             # notify the seller
             notify(
                 item.seller,
-                "Your expired item " + item.name + " has been removed",
+                "Your expired item '" + item.name + "' has been removed",
                 reverse("list_items"),
             )
             # delete the item
@@ -2210,19 +2401,19 @@ def deleteExpired():
     )
     for item_request in expired_item_requests:
         # send email notice
-        send_mail(
+        send_mail_activity(
             "Expired Item Request Removed",
-            "Your expired item request "
+            "Your expired item request '"
             + item_request.name
-            + " has been removed.\nIf you would still like to request the item, please feel free to make another request.",
+            + "' has been removed.\nIf you would still like to request the item, please feel free to make another request.",
             settings.EMAIL_NAME,
-            [item_request.requester.email],
+            [item_request.requester],
             fail_silently=True,
         )
         # notify the requester
         notify(
             item_request.requester,
-            "Your expired item request " + item_request.name + " has been removed",
+            "Your expired item request '" + item_request.name + "' has been removed",
             reverse("list_item_requests"),
         )
         # delete the item request

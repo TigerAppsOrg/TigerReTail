@@ -15,10 +15,6 @@ from pathlib import Path
 import os
 import dj_database_url
 
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
 import django_heroku
 
 from datetime import timedelta
@@ -49,7 +45,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "marketplace.apps.MarketplaceConfig",
-    "cloudinary",
     "crispy_forms",
     "background_task",
 ]
@@ -142,13 +137,8 @@ STATIC_URL = "/static/"
 
 CAS_URL = "https://fed.princeton.edu/cas/"
 ALBUM_LIMIT = 5
-
-# setting up cloudinary image storage
-cloudinary.config(
-    cloud_name="tiger-retail",
-    api_key=os.environ.get("CLOUDINARY_API_KEY"),
-    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
-)
+MAX_IMAGE_SHAPE = 1024, 1024
+MAX_IMAGE_SIZE = 10485760
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
@@ -177,6 +167,14 @@ ALT_ACCOUNT_SUFFIXES = ["", "_alt_a", "_alt_b"]
 ADMIN_EMAILS = ["aklin@princeton.edu", "tigerapps@princetonusg.com"]
 # time buffer after which expired items are deleted
 EXPIRATION_BUFFER = timedelta(days=1)
+
+# S3 storage
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = "tiger-retail"
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_FILE_OVERWRITE = False
 
 # Keep at the bottom of the settings.py file. Activate Django-Heroku.
 django_heroku.settings(locals())

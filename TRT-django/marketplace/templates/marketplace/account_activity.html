@@ -1,5 +1,4 @@
 {% extends "marketplace/base.html" %}
-{% load cloudinary %}
 {% block content %}
 
 <!-- Bootstrap collapsables and tables referenced from online documentation. -->
@@ -28,27 +27,27 @@
               {% for own_activity in own_activity_item %}
               <tr>
                 <th scope="col">{{ own_activity.datetime }}</th>
-                <th scope="col">{{ own_activity.account }}</th>
+                <th scope="col">{{ own_activity.account.name }}</th>
                 <th scope="col">Item</th>
-                <th scope="col">{{ own_activity.item }}</th>
+                <th scope="col">{{ own_activity.item.name }}</th>
                 <th scope="col">{{ own_activity.log }}</th>
               </tr>
               {% endfor %}
               {% for own_activity in own_activity_transaction %}
               <tr>
                 <th scope="col">{{ own_activity.datetime }}</th>
-                <th scope="col">{{ own_activity.account }}</th>
+                <th scope="col">{{ own_activity.account.name }}</th>
                 <th scope="col">Transaction</th>
-                <th scope="col">{{ own_activity.transaction }}</th>
+                <th scope="col">{{ own_activity.transaction.item.name }}</th>
                 <th scope="col">{{ own_activity.log }}</th>
               </tr>
               {% endfor %}
               {% for own_activity in own_activity_item_request %}
               <tr>
                 <th scope="col">{{ own_activity.datetime }}</th>
-                <th scope="col">{{ own_activity.account }}</th>
+                <th scope="col">{{ own_activity.account.name }}</th>
                 <th scope="col">Item Request</th>
-                <th scope="col">{{ own_activity.item_request }}</th>
+                <th scope="col">{{ own_activity.item_request.name }}</th>
                 <th scope="col">{{ own_activity.log }}</th>
               </tr>
               {% endfor %}
@@ -79,8 +78,8 @@
               {% for activity in item_activity %}
               <tr>
                 <th scope="col">{{ activity.datetime }}</th>
-                <th scope="col">{{ activity.account }}</th>
-                <th scope="col">{{ activity.item }}</th>
+                <th scope="col">{{ activity.account.name }}</th>
+                <th scope="col">{{ activity.item.name }}</th>
                 <th scope="col">{{ activity.log }}</th>
               </tr>
               {% endfor %}
@@ -92,7 +91,7 @@
 
     <div class="card my-2">
       <div class="card-header hover-grey text-center" id="transaction_activity_data" type="button" data-bs-toggle="collapse" data-bs-target="#transaction_activity" aria-expanded="false" aria-controls="transaction_activity">
-            My Transactions Activity
+            My Purchases Activity
       </div>
 
       <div id="transaction_activity" class="collapse" aria-labelledby="transaction_activity_data">
@@ -110,8 +109,8 @@
               {% for activity in transaction_activity %}
               <tr>
                 <th scope="col">{{ activity.datetime }}</th>
-                <th scope="col">{{ activity.account }}</th>
-                <th scope="col">{{ activity.transaction }}</th>
+                <th scope="col">{{ activity.account.name }}</th>
+                <th scope="col">{{ activity.transaction.item.name }}</th>
                 <th scope="col">{{ activity.log }}</th>
               </tr>
               {% endfor %}
@@ -141,8 +140,8 @@
               {% for activity in item_request_activity %}
               <tr>
                 <th scope="col">{{ activity.datetime }}</th>
-                <th scope="col">{{ activity.account }}</th>
-                <th scope="col">{{ activity.item_request }}</th>
+                <th scope="col">{{ activity.account.name }}</th>
+                <th scope="col">{{ activity.item_request.name }}</th>
                 <th scope="col">{{ activity.log }}</th>
               </tr>
               {% endfor %}

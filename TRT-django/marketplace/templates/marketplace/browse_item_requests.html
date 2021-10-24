@@ -5,7 +5,7 @@
     <div class="row justify-content-around">
         <div class="col-5">
             <div class="input-group rounded">
-              <input type="search" id="searchbar" oninput="updateQuery()" placeholder="Search" class="form-control" />
+              <input type="search" id="searchbar" oninput="updateQuery()" placeholder="Sort by Search" class="form-control" />
               <button class="btn btn-secondary"><i class=" fa fa-search"></i></button>
             </div>
         </div>
@@ -24,7 +24,7 @@
             <div class="dropdown-menu  dropdown-menu-right" aria-labelledby="dropdownMenuButton">
               <div class="container-fluid dropdown-item mx-0 px-0">
                 <div class="row"> 
-                  <button class="post-dropdown-item px-0 mx-0 noHover" style="border:none; background-color:transparent; outline:none;" data-bs-toggle="modal" data-bs-target="#post-dropdown-item" onclick="disableHover()">POST REQUEST</button>
+                  <button class="post-dropdown-item px-0 mx-0" style="border:none; background-color:transparent; outline:none;" data-bs-toggle="modal" data-bs-target="#post-dropdown-item">POST REQUEST</button>
                 </div>
               </div>
               <a class="dropdown-item" href="{% url 'new_item' %}">POST ITEM</a>
@@ -38,7 +38,7 @@
             <div class="modal-content">
               <div class="modal-header" style="background-color: #cee2db;">
                 <h5 style="font-size:30px" class="modal-title">Post Item Request</h5>
-                <button type="button" class="btn close" onclick="enableHover()" data-bs-dismiss="modal"
+                <button type="button" class="btn close" data-bs-dismiss="modal"
                   aria-label="Close">
                 <span style="font-size:30px" aria-hidden="true">&times;</span>
                 </button>
@@ -49,7 +49,7 @@
                   class="d-none d-sm-inline">Want to Buy?&nbsp;&nbsp;</span>Browse Items</a>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="enableHover()"
+                <button type="button" class="btn btn-secondary"
                   data-bs-dismiss="modal">Close</button>
               </div>
             </div>
@@ -103,6 +103,11 @@
       </div>
 
       <div class="col-sm-10 px-4" style="height: 70vh; overflow-y: auto;">
+        <div class="row mx-2 my-4" id="restart_indicator">
+          <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
         <div class="row" id="results"></div>
       </div>
 
@@ -146,6 +151,7 @@
 
         search_string = $("#searchbar").val();
         restart = true; // trigger a clear of the item_requests array, since query parameters have changed
+        $('#restart_indicator').removeClass('hide');
     }
 
     // generates and injects new item_request HTML elements, updates 'last_rendered_item_request_index'
@@ -158,7 +164,7 @@
         // generate and add new item_request html elements
         for (const item_request of item_requests.slice(last_rendered_item_request_index + 1)) {
             let item_request_html = '';
-            item_request_html += '<div class="card item-card hover col-12 col-md-4" style="width: 18rem; padding-top: 1%; padding-bottom: 1%;">';
+            item_request_html += '<div class="card item-card hover col-12 col-md-4" style="width: 18rem; padding-top: 1%; padding-bottom: 1%;" data-bs-toggle="modal" data-bs-target="#modal' + item_request["pk"] + '">';
             // image of the item_request
             item_request_html += '<div style="text-align:center; padding-top:6%; padding-bottom:4%" class="card-img-top rounded-corners">';
             item_request_html += '<div style="height: 150px;"><img src="';
@@ -219,17 +225,19 @@
                   item_request_html += '<a class="btn btn-success" style="padding-left: 23px; padding-right: 23px; margin-right: 6px;" href="/item_requests/' + item_request["pk"] + '/contact/">Contact</a>';
                   item_request_html += '<button type="button" id="button_modal';
                   item_request_html += item_request["pk"]
-                  item_request_html += '" class="btn btn-secondary noHover pull-right"';
-                    item_request_html += 'onclick="disableHover()" data-bs-toggle="modal" data-bs-target="#modal';
+                  item_request_html += '" class="btn btn-secondary pull-right"';
+                    item_request_html += 'data-bs-toggle="modal" data-bs-target="#modal';
                     item_request_html += item_request["pk"];
                     item_request_html += '" style="padding-left: 28px; padding-right: 28px;">';
                   item_request_html += 'Details </button>';
                   item_request_html += '<a style="margin-left: 7px;" href="/flag_item_request/' + item_request["pk"] + '/" data-bs-toggle="tooltip" data-bs-placement="top" title="Report"><i class="fas fa-flag" style="color:orange;"></i></a>';
                 item_request_html += '</div>';
               item_request_html += '</div>';
+              item_request_html += '</div>';
+            item_request_html += '</div>';
 
               // modal
-              item_request_html += '<div class="modal fade" id="modal';
+              item_request_html += '<div class="modal fade" style="cursor: auto;" id="modal';
               item_request_html += item_request['pk'];
               item_request_html += '" tabindex="-1" role="dialog"aria-labelledby="modal';
               item_request_html += item_request['pk'];
@@ -242,13 +250,13 @@
                     item_request_html += '<h5 style="font-size:30px" class="modal-title" id="exampleModalLongTitle">';
                     item_request_html += item_request["name"];
                     item_request_html += '</h5>';
-                    item_request_html += '<button type="button" class="btn close" onclick="enableHover()" data-bs-dismiss="modal" aria-label="Close">';
+                    item_request_html += '<button type="button" class="btn close" data-bs-dismiss="modal" aria-label="Close">';
                     item_request_html += '<span style="font-size:30px" aria-hidden="true">&times;</span>';
                     item_request_html += '</button>';
                   item_request_html += '</div>';
                   // modal body
                   item_request_html += '<div class="modal-body">';
-                    item_request_html += '<h2 style="text-align:center;">Item Request Details</h2>';
+                    item_request_html += '<h5 style="text-align:center;">(Click Image to Zoom)</h5>';
                     // carousel item_requests
                     item_request_html += '<div id="myCarousel';
                     item_request_html += item_request["pk"];
@@ -257,26 +265,14 @@
                       // carousel list box
                       item_request_html += '<div class="carousel-inner" role="listbox">';
                         item_request_html += '<div class="carousel-item active">';
-                          item_request_html += '<div style="height: 150px;"><img src="';
+                          item_request_html += '<div style="height: 150px;"><a style="cursor: zoom-in;" target="_blank" href="' + item_request["image"] + '"><img src="';
                           item_request_html += item_request["image"];
-                        item_request_html += '" style="max-width: 220px; max-height: 150px; width: auto; height: auto;"></div></div>';
+                        item_request_html += '" style="max-width: 220px; max-height: 150px; width: auto; height: auto;"></a></div></div>';
                         /* item_request_html += '<p>';
                         item_request_html += item_request["album"];
                         item_request_html += '</p>'; */
                       item_request_html += '</div>';
                       item_request_html += '<br>';
-                      // carousel previous button
-                      item_request_html += '<a class="carousel-control-prev" href="#myCarousel';
-                      item_request_html += item_request["pk"];
-                      item_request_html += '" role="button" data-bs-slide="prev">';
-                      item_request_html += '<span class="carousel-control-prev-icon" aria-hidden="true"></span>';
-                      item_request_html += '<span class="sr-only">Previous</span></a>';
-                      // carousel next button
-                      item_request_html += '<a class="carousel-control-next" href="#myCarousel';
-                      item_request_html += item_request["pk"];
-                      item_request_html += '" role="button" data-bs-slide="next">';
-                      item_request_html += '<span class="carousel-control-next-icon" aria-hidden="true"></span>';
-                      item_request_html += '<span class="sr-only">Next</span></a>';
                     item_request_html += '</div>';
                     // description
                     item_request_html += '<div style="background:#d8e2dc; border-radius:10px;" id="description">';
@@ -327,13 +323,11 @@
                   // modal footer
                   item_request_html += '<div class="modal-footer">';
                     item_request_html += '<a class="btn btn-success" style="padding-left: 23px; padding-right: 23px;" href="/item_requests/' + item_request["pk"] + '/contact/">Contact</a>';
-                  item_request_html += '<button type="button" class="btn btn-secondary" onclick="enableHover()"data-bs-dismiss="modal">Close</button>';
+                  item_request_html += '<button type="button" class="btn btn-secondary"data-bs-dismiss="modal">Close</button>';
                   item_request_html += '<a style="margin-left: 10px;" href="/flag_item_request/' + item_request["pk"] + '/" data-bs-toggle="tooltip" data-bs-placement="top" title="Report"><i class="fas fa-flag" style="color:orange;"></i></a>';
                   item_request_html += '</div>';
                 item_request_html += '</div>';
               item_request_html += '</div>';
-            item_request_html += '</div>';
-            item_request_html += '</div>';
             item_request_html += '</div>';
             const item_request_element = document.createElement("div");
             item_request_element.classList.add("col-xxl-4");
@@ -364,13 +358,13 @@
 
     // retrieve and render item_requests repeatedly in a synchronous fashion 
     // (only this function and those it calls should ever touch 'item_requests', 'last_rendered_item_request_index' to avoid concurrency issues)
-    function populateItemRequestsSynchronously(count, period) {
+    function populateItemRequestsSynchronously(count, period, max_period) {
 
         if (restart) {
             restart = false;
             item_requests = [];
             last_rendered_item_request_index = -1;
-            window.setTimeout(populateItemRequestsSynchronously(count, period), period);
+            window.setTimeout(() => {populateItemRequestsSynchronously(count, period, max_period)}, period);
             return;
         }
 
@@ -395,17 +389,26 @@
             .then((resp) => {return resp.json();})
             .then((data) => {
 
+                const item_requests_was_empty = item_requests.length === 0;
+
                 // push item_requests and render
                 item_requests.push(...data["item_requests"]);
                 injectItemRequestsHTML();
+
+                if (item_requests_was_empty) {
+                  $('#restart_indicator').addClass('hide');
+                }
                 
                 // notice that setTimeout is called only in callback of fetch, to avoid concurrency issues
                 // (the call to setTimeout in the .catch only occurs if .then doesn't execute)
-                window.setTimeout(populateItemRequestsSynchronously(count, period), period);
+                window.setTimeout(() => {populateItemRequestsSynchronously(count, period, max_period)}, data["item_requests"].length === 0 ? max_period : period);
                 return;
             })
             .catch((error) => {
-                window.setTimeout(populateItemRequestsSynchronously(count, period), period);
+                if (error instanceof TypeError && error.message === "cancelled") {
+                  return console.log(error);
+                }
+                window.setTimeout(() => {populateItemRequestsSynchronously(count, period, max_period)}, period);
                 return console.log(error);
             });
             
@@ -413,7 +416,7 @@
     }
 
     function setup() {
-            window.setTimeout(() => {populateItemRequestsSynchronously(5, 10)}, 0);
+            window.setTimeout(() => {populateItemRequestsSynchronously(20, 20, 2000)}, 0);
         }
 
     $('document').ready(setup);

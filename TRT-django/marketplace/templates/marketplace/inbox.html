@@ -76,6 +76,7 @@
                 end_message_pk: -1, 
                 text: '', 
                 sending: false,
+                loading: false,
             };
         }
 
@@ -115,11 +116,14 @@
                             }
                             // sort by date
                             messages.sort((message1, message2) => message1['datetime']-message2['datetime']);
-                            this.setState({get_more_messages: false, messages: messages, end_message_pk: data['last_message_pk'], beg_message_pk: data['last_message_pk']}, () => {
+                            this.setState({get_more_messages: false, loading: this.state.clear_messages, messages: messages, end_message_pk: data['last_message_pk'], beg_message_pk: data['last_message_pk']}, () => {
                                 window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                             });
                         })
-                        .catch((error) => { 
+                        .catch((error) => {
+                            if (error instanceof TypeError && error.message === "cancelled") {
+                                return console.log(error);
+                            } 
                             window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                             return console.log(error);
                         });
@@ -161,13 +165,19 @@
                                         window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                                     });
                                 })
-                                .catch((error) => { 
+                                .catch((error) => {
+                                    if (error instanceof TypeError && error.message === "cancelled") {
+                                        return console.log(error);
+                                    } 
                                     window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                                     return console.log(error);
                                 });
                         });
                     })
-                    .catch((error) => { 
+                    .catch((error) => {
+                        if (error instanceof TypeError && error.message === "cancelled") {
+                            return console.log(error);
+                        } 
                         window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
                         return console.log(error);
                     });
@@ -197,7 +207,7 @@
             {
                 return;
             }
-            this.setState({active_contact_pk: contact_pk, clear_messages: true});
+            this.setState({active_contact_pk: contact_pk, clear_messages: true, loading: true});
             this.setInputText(this.state.text);
         }
 
@@ -264,9 +274,9 @@
             text_input.value = '';
 
             // start the synchronous messages manager
-            window.setTimeout(() => {this.manageMessagesSynchronously(5, 10)}, 0);
+            window.setTimeout(() => {this.manageMessagesSynchronously(10, 100)}, 0);
             // periodically set get_more_messages to true
-            window.setInterval(() => {this.setState({get_more_messages: true})}, 50);
+            window.setInterval(() => {this.setState({get_more_messages: true})}, 20);
         }
 
         // implementing sticky scroll
@@ -311,6 +321,9 @@
                 }
                 else 
                 {
+                    if (this.state.loading) {
+                        return React.createElement('h5', null, 'Loading messages...');
+                    }
                     return React.createElement('h5', null, 'No message history.');
                 }
             }

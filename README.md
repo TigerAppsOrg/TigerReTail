@@ -1,8 +1,6 @@
 # TRT Tiger ReTail
 an online web platform for Princeton students to buy/sell/request goods
 
-initial prototype is live here! https://tiger-retail.herokuapp.com/
-
 note to developers:
 
 to deploy to Heroku, the Django project folder must be the ROOT of the deployed branch

@@ -40,10 +40,22 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div class="row my-2">
             <div class="col-lg-9">
                 <label>How to Contact Me*</label>
                 {{ account_form.contact|as_crispy_field }}
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-lg-6 mb-2">
+                <label>Email Me about All Activity</label>
+                <p class="mb-0">(item changes, purchase requests, new contacts, etc.)</p>
+                {{ account_form.email_activity|as_crispy_field }}
+            </div>
+            <div class="col-lg-6 mb-2">
+                <label>Email Me about New Activity</label>
+                <p class="mb-0">(email once and not again until in-site bell notifications seen)</p>
+                {{ account_form.email_unread_notification|as_crispy_field }}
             </div>
         </div>
         <div class="text-center my-2 p-4">

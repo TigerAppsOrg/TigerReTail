@@ -1,17 +1,3 @@
-function disableHover() {
-   cards = document.getElementsByClassName("card");
-   for (i = 0; i < cards.length; i++) {
-      cards[i].classList.remove('hover');
-   }
-}
-
-function enableHover() {
-   cards = document.getElementsByClassName("card");
-   for (i = 0; i < cards.length; i++) {
-      cards[i].classList.add('hover');
-   }
-}
-
 $('.multi-item-carousel .carousel-item').each(function () {
    var next = $(this).next();
    if (!next.length) next = $(this).siblings(':first');
