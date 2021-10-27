@@ -392,7 +392,7 @@ a.orange-link:active {
    color: rgb(252, 169, 45);
 }
 
-#hint_id_deadline {
+#hint_id_deadline, #hint_id_categories {
    font-size: 12px;
 }
 

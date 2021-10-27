@@ -2,6 +2,7 @@ from django.db import models
 from django.forms.widgets import NumberInput
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.dispatch import receiver
 from django.db.models.signals import post_delete
 from decimal import Decimal
@@ -108,7 +109,10 @@ class Item(models.Model):
             (CONDITION['index'], CONDITION['name']) for CONDITION in CONDITIONS
         ],
     )
-    categories = models.ManyToManyField(Category)
+    categories = models.ManyToManyField(
+        Category, 
+        help_text=mark_safe("""Sell textbooks on <a href="https://rebook.tigerapps.org/" target="_blank">rebook</a>""")
+    )
     description = models.CharField(max_length=1000)
     image = models.ImageField(upload_to="images/")
     status = models.DecimalField(
@@ -235,7 +239,10 @@ class ItemRequest(models.Model):
             (CONDITION['index'], CONDITION['name']) for CONDITION in Item.CONDITIONS
         ],
     )
-    categories = models.ManyToManyField(Category)
+    categories = models.ManyToManyField(
+            Category,
+            help_text=mark_safe("""Find textbooks on <a href="https://rebook.tigerapps.org/" target="_blank">rebook</a>""")
+)
     description = models.CharField(max_length=1000)
     image = models.ImageField(upload_to="images/")
 
