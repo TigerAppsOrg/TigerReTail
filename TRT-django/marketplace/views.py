@@ -42,6 +42,8 @@ from datetime import date, datetime
 from io import BytesIO
 from PIL import Image
 
+from urllib.parse import quote_plus, unquote_plus
+
 # ----------------------------------------------------------------------
 
 # helper method to log an error to server stderr
@@ -250,21 +252,22 @@ def authentication_required(view_function):
 
         # if request contains a ticket, try validating it
         if "ticket" in request.GET:
+            cas_url = unquote_plus(request.GET["quotedcasurl"])
             username = CASClient.validate(
-                request.build_absolute_uri(), request.GET["ticket"]
+                cas_url, request.build_absolute_uri(), request.GET["ticket"]
             ).strip()
 
             if username is not None:
                 # store authenticated username,
                 # check that associated Account exists, else create one,
                 # call view as normal
+                username = username.lower()
                 request.session["username"] = username
                 if not Account.objects.filter(username=username).exists():
-                    # note this assumes use of princeton email
                     Account(
                         username=username,
                         name=username,
-                        email=username + "@princeton.edu",
+                        email=username + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
                     ).save()
                 # SPECIAL CASE: if the netid is an ADMIN_NETID
                 if username in settings.ADMIN_NETIDS:
@@ -277,7 +280,7 @@ def authentication_required(view_function):
                             Account(
                                 username=username + suffix,
                                 name=username + suffix,
-                                email=username + "@princeton.edu",
+                                email=username + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
                             ).save()
                     request.session["username"] = (
                         username + settings.ALT_ACCOUNT_SUFFIXES[0]
@@ -289,7 +292,7 @@ def authentication_required(view_function):
         # before redirection, store POST details for use once redirected back
         if request.method == "POST":
             request.session[request.path] = request.POST
-        return redirect(CASClient.getLoginUrl(request.build_absolute_uri()))
+        return redirect("cas_selection", quote_plus(request.build_absolute_uri()))
 
     return wrapper
 
@@ -315,21 +318,22 @@ def admin_required(view_function):
 
         # if request contains a ticket, try validating it and call view if admin
         if "ticket" in request.GET:
+            cas_url = unquote_plus(request.GET["quotedcasurl"])
             username = CASClient.validate(
-                request.build_absolute_uri(), request.GET["ticket"]
+                cas_url, request.build_absolute_uri(), request.GET["ticket"]
             ).strip()
 
             if username is not None:
                 # store authenticated username,
                 # check that associated Account exists, else create one,
                 # call view as normal only if admin
+                username = username.lower()
                 request.session["username"] = username
                 if not Account.objects.filter(username=username).exists():
-                    # note this assumes use of princeton email
                     Account(
                         username=username,
                         name=username,
-                        email=username + "@princeton.edu",
+                        email=username + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
                     ).save()
                 # SPECIAL CASE: if the netid is an ADMIN_NETID
                 if username in settings.ADMIN_NETIDS:
@@ -342,7 +346,7 @@ def admin_required(view_function):
                             Account(
                                 username=username + suffix,
                                 name=username + suffix,
-                                email=username + "@princeton.edu",
+                                email=username + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
                             ).save()
                     request.session["username"] = (
                         username + settings.ALT_ACCOUNT_SUFFIXES[0]
@@ -357,7 +361,7 @@ def admin_required(view_function):
         # before redirection, store POST details for use once redirected back
         if request.method == "POST":
             request.session[request.path] = request.POST
-        return redirect(CASClient.getLoginUrl(request.build_absolute_uri()))
+        return redirect("cas_selection", quote_plus(request.build_absolute_uri()))
 
     return wrapper
 
@@ -2358,12 +2362,28 @@ def demo(request):
 
 # ----------------------------------------------------------------------
 
-
+@authentication_required
 def logout(request):
+    account = Account.objects.get(username=request.session.get("username"))
     request.session.pop("username", default=None)
+    cas_url = settings.CAS_URLS[settings.CAS_EMAIL_DOMAINS.index(account.email[account.email.index('@'):])]
     return redirect(
-        CASClient.getLogoutUrl(request.build_absolute_uri(reverse("gallery")))
+        CASClient.getLogoutUrl(cas_url, request.build_absolute_uri(reverse("gallery")))
     )
+
+
+# ----------------------------------------------------------------------
+
+
+def casSelection(request, quoted_url):
+    return render(request, "marketplace/cas_selection.html", {"quoted_url": quoted_url})
+
+
+# ----------------------------------------------------------------------
+
+
+def casRedirect(request, quoted_cas_url, quoted_url):
+    return redirect(CASClient.getLoginUrl(unquote_plus(quoted_cas_url), unquote_plus(quoted_url) + ("?" if unquote_plus(quoted_url).find('?') == -1 else "&") + "quotedcasurl=" + unquote_plus(quoted_cas_url)))
 
 
 # ----------------------------------------------------------------------

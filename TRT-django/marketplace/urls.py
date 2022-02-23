@@ -63,4 +63,6 @@ urlpatterns = [
     path("faq/", views.faq, name="faq"),
     path("contact/", views.contact, name="contact"),
     path("demo/", views.demo, name="demo"),
+    path("cas_selection/<str:quoted_url>/", views.casSelection, name="cas_selection"),
+    path("cas_redirect/<str:quoted_cas_url>/<str:quoted_url>/", views.casRedirect, name="cas_redirect"),
 ]

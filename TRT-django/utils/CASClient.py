@@ -29,13 +29,15 @@ def stripTicket(url):
 
 # -----------------------------------------------------------------------
 
-# Validate a login ticket in the url by contacting the CAS server. If
+# Validate a login ticket in the url by contacting the CAS servers. If
 # valid, return the user's username; otherwise, return None.
 
 
-def validate(url, ticket):
+def validate(cas_url, url, ticket):
+    if cas_url not in settings.CAS_URLS:
+        cas_url = settings.CAS_URLS[0]
     val_url = (
-        settings.CAS_URL
+        cas_url
         + "validate"
         + "?service="
         + quote(stripTicket(url))
@@ -57,8 +59,10 @@ def validate(url, ticket):
 # Return the url for the CAS authentication login page
 
 
-def getLoginUrl(url):
-    return settings.CAS_URL + "login" + "?service=" + quote(stripTicket(url))
+def getLoginUrl(cas_url, url):
+    if cas_url not in settings.CAS_URLS:
+        cas_url = settings.CAS_URLS[0]
+    return cas_url + "login" + "?service=" + quote(stripTicket(url))
 
 
 # -----------------------------------------------------------------------
@@ -66,8 +70,10 @@ def getLoginUrl(url):
 # Return the url for the CAS authentication logout page
 
 
-def getLogoutUrl(url):
-    return settings.CAS_URL + "logout" + "?service=" + quote(stripTicket(url))
+def getLogoutUrl(cas_url, url):
+    if cas_url not in settings.CAS_URLS:
+        cas_url = settings.CAS_URLS[0]
+    return cas_url + "logout" + "?service=" + quote(stripTicket(url))
 
 
 # -----------------------------------------------------------------------

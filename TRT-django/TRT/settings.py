@@ -78,6 +78,7 @@ TEMPLATES = [
                 "marketplace.context_processors.transaction",
                 "marketplace.context_processors.admin",
                 "marketplace.context_processors.categories",
+                "marketplace.context_processors.quoted_cas_infos"
             ],
         },
     },
@@ -135,7 +136,9 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
-CAS_URL = "https://fed.princeton.edu/cas/"
+CAS_NAMES = "Princeton University", "Institute for Advanced Study"
+CAS_URLS = "https://fed.princeton.edu/cas/", "https://cas.ias.edu/cas/"
+CAS_EMAIL_DOMAINS = "@princeton.edu", "@ias.edu"
 ALBUM_LIMIT = 5
 MAX_IMAGE_SHAPE = 1024, 1024
 MAX_IMAGE_SIZE = 10485760

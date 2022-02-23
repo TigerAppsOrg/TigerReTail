@@ -1,6 +1,7 @@
 # custom context processors to include common template context data
 from .models import Account, Item, Transaction, Category
 from django.conf import settings
+from urllib.parse import quote_plus
 
 
 def account(request):
@@ -31,3 +32,6 @@ def admin(request):
 
 def categories(request):
     return {"categories": Category.objects.all()}
+
+def quoted_cas_infos(request):
+    return {"quoted_cas_infos": [(settings.CAS_NAMES[i], quote_plus(settings.CAS_URLS[i])) for i in range(len(settings.CAS_NAMES))]}
