@@ -507,6 +507,7 @@ def getItemsRelative(request):
                     "description": item.description,
                     "image": item.image.url,
                     "album": [albumimage.image.url for albumimage in item.album.all()],
+                    "contact": item.seller.contact,
                 } for item in items
             ]
         }
