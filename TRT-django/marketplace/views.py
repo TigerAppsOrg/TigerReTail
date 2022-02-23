@@ -1734,6 +1734,7 @@ def getItemRequestsRelative(request):
                     "condition_index": item_request.condition,
                     "description": item_request.description,
                     "image": item_request.image.url,
+                    "contact": item_request.requester.contact,
                 } for item_request in item_requests
             ]
         }
