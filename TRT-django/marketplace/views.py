@@ -508,6 +508,7 @@ def getItemsRelative(request):
                     "image": item.image.url,
                     "album": [albumimage.image.url for albumimage in item.album.all()],
                     "contact": item.seller.contact,
+                    "email": item.seller.email,
                 } for item in items
             ]
         }
@@ -1735,6 +1736,7 @@ def getItemRequestsRelative(request):
                     "description": item_request.description,
                     "image": item_request.image.url,
                     "contact": item_request.requester.contact,
+                    "email": item_request.requester.email,
                 } for item_request in item_requests
             ]
         }
