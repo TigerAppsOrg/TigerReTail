@@ -139,6 +139,7 @@ STATIC_URL = "/static/"
 CAS_NAMES = "Princeton University", "Institute for Advanced Study"
 CAS_URLS = "https://fed.princeton.edu/cas/", "https://cas.ias.edu/cas/"
 CAS_EMAIL_DOMAINS = "@princeton.edu", "@ias.edu"
+CAS_USERNAME_PREFIXES = "ptn_", "ias_"
 ALBUM_LIMIT = 5
 MAX_IMAGE_SHAPE = 1024, 1024
 MAX_IMAGE_SIZE = 10485760
@@ -162,8 +163,8 @@ CACHES = {
     }
 }
 
-# list of netids for which we allow multi-accounts
-ADMIN_NETIDS = ["aklin", "singl", "kjm3", "sarats", "ca9"]
+# list of usernames for which we allow multi-accounts
+ADMIN_USERNAMES = ["ptn_aklin", "ptn_singl", "ptn_kjm3", "ptn_sarats", "ptn_ca9"]
 # list of alt account suffixes for admins
 ALT_ACCOUNT_SUFFIXES = ["", "_alt_a", "_alt_b"]
 # list of emails to send admin notices to

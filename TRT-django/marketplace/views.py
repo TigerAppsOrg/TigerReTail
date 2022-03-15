@@ -255,24 +255,25 @@ def authentication_required(view_function):
         # if request contains a ticket, try validating it
         if "ticket" in request.GET:
             cas_url = unquote_plus(request.GET["quotedcasurl"])
-            username = CASClient.validate(
+            netid = CASClient.validate(
                 cas_url, request.build_absolute_uri(), request.GET["ticket"]
             ).strip()
 
-            if username is not None:
+            if netid is not None:
                 # store authenticated username,
                 # check that associated Account exists, else create one,
                 # call view as normal
-                username = username.lower()
+                netid = netid.lower()
+                username = settings.CAS_USERNAME_PREFIXES[settings.CAS_URLS.index(cas_url)] + netid
                 request.session["username"] = username
                 if not Account.objects.filter(username=username).exists():
                     Account(
                         username=username,
-                        name=username,
-                        email=username + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
+                        name=netid,
+                        email=netid + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
                     ).save()
-                # SPECIAL CASE: if the netid is an ADMIN_NETID
-                if username in settings.ADMIN_NETIDS:
+                # SPECIAL CASE: if the username is an ADMIN_USERNAME
+                if username in settings.ADMIN_USERNAMES:
                     # create all the alternate accounts
                     # and assign the first one as active
                     for suffix in settings.ALT_ACCOUNT_SUFFIXES:
@@ -281,8 +282,8 @@ def authentication_required(view_function):
                         ).exists():
                             Account(
                                 username=username + suffix,
-                                name=username + suffix,
-                                email=username + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
+                                name=netid + suffix,
+                                email=netid + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
                             ).save()
                     request.session["username"] = (
                         username + settings.ALT_ACCOUNT_SUFFIXES[0]
@@ -313,7 +314,7 @@ def admin_required(view_function):
         if "username" in request.session:
             if not Account.objects.filter(username=request.session.get("username")).exists():
                 return redirect("logout")
-            if request.session["username"] in [netid + suffix for netid in settings.ADMIN_NETIDS for suffix in settings.ALT_ACCOUNT_SUFFIXES]:
+            if request.session["username"] in [username + suffix for username in settings.ADMIN_USERNAMES for suffix in settings.ALT_ACCOUNT_SUFFIXES]:
                 return view_function(request, *args, **kwargs)
 
             else:
@@ -323,24 +324,25 @@ def admin_required(view_function):
         # if request contains a ticket, try validating it and call view if admin
         if "ticket" in request.GET:
             cas_url = unquote_plus(request.GET["quotedcasurl"])
-            username = CASClient.validate(
+            netid = CASClient.validate(
                 cas_url, request.build_absolute_uri(), request.GET["ticket"]
             ).strip()
 
-            if username is not None:
+            if netid is not None:
                 # store authenticated username,
                 # check that associated Account exists, else create one,
                 # call view as normal only if admin
-                username = username.lower()
+                netid = netid.lower()
+                username = settings.CAS_USERNAME_PREFIXES[settings.CAS_URLS.index(cas_url)] + netid
                 request.session["username"] = username
                 if not Account.objects.filter(username=username).exists():
                     Account(
                         username=username,
-                        name=username,
-                        email=username + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
+                        name=netid,
+                        email=netid + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
                     ).save()
-                # SPECIAL CASE: if the netid is an ADMIN_NETID
-                if username in settings.ADMIN_NETIDS:
+                # SPECIAL CASE: if the username is an ADMIN_USERNAME
+                if username in settings.ADMIN_USERNAMES:
                     # create all the alternate accounts
                     # and assign the first one as active
                     for suffix in settings.ALT_ACCOUNT_SUFFIXES:
@@ -349,8 +351,8 @@ def admin_required(view_function):
                         ).exists():
                             Account(
                                 username=username + suffix,
-                                name=username + suffix,
-                                email=username + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
+                                name=netid + suffix,
+                                email=netid + settings.CAS_EMAIL_DOMAINS[settings.CAS_URLS.index(cas_url)],
                             ).save()
                     request.session["username"] = (
                         username + settings.ALT_ACCOUNT_SUFFIXES[0]
