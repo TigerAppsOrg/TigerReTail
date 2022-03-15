@@ -24,8 +24,8 @@ def admin(request):
         "admin": "username" in request.session
         and request.session.get("username")
         in [
-            netid + suffix
-            for netid in settings.ADMIN_NETIDS
+            username + suffix
+            for username in settings.ADMIN_USERNAMES
             for suffix in settings.ALT_ACCOUNT_SUFFIXES
         ]
     }

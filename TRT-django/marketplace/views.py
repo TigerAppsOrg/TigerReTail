@@ -2325,18 +2325,18 @@ def verifyEmail(request, token):
 def cycleAccount(request):
     username = request.session.get("username")
 
-    netids = settings.ADMIN_NETIDS
+    usernames = settings.ADMIN_USERNAMES
     suffixes = settings.ALT_ACCOUNT_SUFFIXES
 
-    # set the session username to the next netid+suffix
+    # set the session username to the next username+suffix
     done = False
-    for i in range(len(netids)):
+    for i in range(len(usernames)):
         if done:
             break
         for j in range(len(suffixes)):
-            if username == netids[i] + suffixes[j]:
+            if username == usernames[i] + suffixes[j]:
                 request.session["username"] = (
-                    netids[i] + suffixes[(j + 1) % len(suffixes)]
+                    usernames[i] + suffixes[(j + 1) % len(suffixes)]
                 )
                 done = True
                 break
