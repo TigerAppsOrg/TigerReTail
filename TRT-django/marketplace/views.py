@@ -248,6 +248,8 @@ def authentication_required(view_function):
 
         # if username in session, can call view as normal
         if "username" in request.session:
+            if not Account.objects.filter(username=request.session.get("username")).exists():
+                return redirect("logout")
             return view_function(request, *args, **kwargs)
 
         # if request contains a ticket, try validating it
@@ -309,6 +311,8 @@ def admin_required(view_function):
 
         # if username in session, check admin
         if "username" in request.session:
+            if not Account.objects.filter(username=request.session.get("username")).exists():
+                return redirect("logout")
             if request.session["username"] in [netid + suffix for netid in settings.ADMIN_NETIDS for suffix in settings.ALT_ACCOUNT_SUFFIXES]:
                 return view_function(request, *args, **kwargs)
 
@@ -2366,8 +2370,10 @@ def demo(request):
 
 # ----------------------------------------------------------------------
 
-@authentication_required
 def logout(request):
+    if not Account.objects.filter(username=request.session.get("username")).exists():
+        request.session.pop("username", default=None)
+        return redirect("gallery")
     account = Account.objects.get(username=request.session.get("username"))
     request.session.pop("username", default=None)
     cas_url = settings.CAS_URLS[settings.CAS_EMAIL_DOMAINS.index(account.email[account.email.index('@'):])]

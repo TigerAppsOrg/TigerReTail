@@ -6,7 +6,7 @@ from urllib.parse import quote_plus
 
 def account(request):
     account = None
-    if "username" in request.session:
+    if "username" in request.session and Account.objects.filter(username=request.session.get("username")).exists():
         account = Account.objects.get(username=request.session.get("username"))
     return {"account": account}
 
