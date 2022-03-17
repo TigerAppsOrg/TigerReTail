@@ -9,6 +9,7 @@ urlpatterns = [
     path("items/<int:pk>/edit/", views.editItem, name="edit_item"),
     path("items/<int:pk>/delete/", views.deleteItem, name="delete_item"),
     path("items/<int:pk>/contact/", views.contactItem, name="contact_item"),
+    path("items/<int:pk>/page/", views.pageItem, name="page_item"),
     path("purchases/list/", views.listPurchases, name="list_purchases"),
     path("purchases/new/", views.newPurchase, name="new_purchase"),
     path("purchases/<int:pk>/confirm/", views.confirmPurchase, name="confirm_purchase"),
@@ -32,6 +33,11 @@ urlpatterns = [
         "item_requests/<int:pk>/contact/",
         views.contactItemRequest,
         name="contact_item_request",
+    ),
+    path(
+        "item_requests/<int:pk>/page/",
+        views.pageItemRequest,
+        name="page_item_request",
     ),
     path(
         "item_requests/browse/", views.browseItemRequests, name="browse_item_requests"

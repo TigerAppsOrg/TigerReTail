@@ -865,6 +865,21 @@ def contactItem(request, pk):
 
 # ----------------------------------------------------------------------
 
+# item page
+
+
+def pageItem(request, pk):
+    try:
+        item = Item.objects.get(pk=pk)
+    except:
+        return HttpResponse(status=400)
+
+    context = {"item": item}
+    return render(request, "marketplace/page_item.html", context)
+
+
+# ----------------------------------------------------------------------
+
 # personal purchases page
 
 
@@ -1603,6 +1618,21 @@ def contactItemRequest(request, pk):
     )
 
     return redirect("inbox")
+
+
+# ----------------------------------------------------------------------
+
+# item_request page
+
+
+def pageItemRequest(request, pk):
+    try:
+        item_request = ItemRequest.objects.get(pk=pk)
+    except:
+        return HttpResponse(status=400)
+
+    context = {"item_request": item_request}
+    return render(request, "marketplace/page_item_request.html", context)
 
 
 # ----------------------------------------------------------------------

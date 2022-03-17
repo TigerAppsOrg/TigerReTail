@@ -1,0 +1,92 @@
+{% extends "marketplace/base.html" %}
+{% block content %}
+
+<div class="topbar" style="text-align: right;">
+    <a href="{% url 'gallery' %}" class="btn btn-outline-dark" style="font-weight: bold;">BACK TO IMAGE GALLERY</a>
+</div>
+
+<div class="gallery_back container-fluid mb-3">
+
+    <div class="container my-4">
+      <div id="gallery_title">{{item.name}}</div>
+    <hr>
+
+    <h5 style="text-align:center;">(Click Image to Zoom)</h5>
+    <div id="myCarousel{{item.pk}}" class="carousel slide text-center multi-item-carousel"
+        data-bs-ride="carousel">
+        <br>
+        <div class="carousel-inner" role="listbox">
+        <!--carousel-item active-->
+        <div class="carousel-item active">
+            <a style="cursor: zoom-in;" target="_blank" href="{{ item.image.url }}">
+            <img src="{{ item.image.url }}" style="max-width: 220px; max-height: 150px; width: auto; height: auto;">
+            </a>
+        </div>
+        {%for image in item.album.all%}
+        <div class="carousel-item">
+            <a style="cursor: zoom-in;" target="_blank" href="{{ image.image.url }}">
+            <img src="{{ image.image.url }}" style="max-width: 220px; max-height: 150px; width: auto; height: auto;">
+            </a>
+        </div>
+        {%endfor%}
+        </div>
+        <br>
+        {% if item.album.all|length > 0 %}
+        <a class="carousel-control-prev" href="#myCarousel{{item.pk}}" role="button"
+        data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#myCarousel{{item.pk}}" role="button"
+        data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="sr-only">Next</span>
+        </a>
+        {% endif %}
+    </div>
+    <div class="mb-4" style="background:#d8e2dc; border-radius:10px;" id="description">
+        <div class="item-details">
+        {%if item.negotiable == True%}
+        <p class="card-text"><i class="fas fa-tag"></i> ${{item.price}} USD (negotiable)</p>
+        {%else%}
+        <p class="card-text"><i class="fas fa-tag"></i> ${{item.price}} USD</p>
+        {%endif%}
+        <p class="card-text"><i class="fas fa-hourglass-half"></i> till {{item.deadline}}</p>
+        <p class="card-text"><i class="fas fa-comment"></i> {{item.description}}</p>
+        <p class="card-text"><i class="fa fa-check" aria-hidden="true"></i> Quality</p>
+        {% if item.condition == Item.NEW%}
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+            style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        {% elif item.condition == Item.LIKE_NEW %}
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+            style="width: 85%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        {% elif item.condition == Item.GENTLY_LOVED %}
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+            style="width: 70%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        {% elif item.condition == Item.WELL_LOVED %}
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+            style="width: 55%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        {% elif item.condition == Item.POOR %}
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+            style="width: 40%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        {% endif %}
+        </div>
+    </div>
+
+    <a class="btn btn-primary" style="padding-left: 23px; padding-right: 23px;" href="{% url 'contact_item' item.pk %}">Contact</a>
+    <form action="{% url 'new_purchase' %}" method="post" style="display: inline-block;">{% csrf_token %}<input type="hidden" name="pk" value="{{ item.pk }}"><input type="submit" class="btn btn-success pull-left" value="Purchase" style="padding-left: 19px; padding-right: 19px;"></form>
+    <a style="margin-left: 10px;" href="{% url 'flag_item' item.pk %}" data-bs-toggle="tooltip" data-bs-placement="top" title="Report"><i class="fas fa-flag" style="color:orange;"></i></a>
+</div>
+
+</div>
+{% endblock content %}
