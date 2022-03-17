@@ -63,6 +63,12 @@
   <div class="container my-4">
     <div id="gallery_title">Items for Sale</div>
     <p>Purchase items here. Buy textbooks on <a href="https://rebook.tigerapps.org/" target="_blank">rebook</a>. Check out our FAQ for more.</p>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="table_toggle" oninput="updateQuery()">
+        <label class="form-check-label" for="table_toggle">
+            view as table
+        </label>
+    </div>
     <hr>
   </div>
 
@@ -102,13 +108,19 @@
             
       </div>
 
-      <div class="col-sm-10 px-4" style="height: 70vh; overflow-y: auto;">
+      <div class="col-sm-10 px-4" style="height: 95vh; overflow-y: auto;">
         <div class="row mx-2 my-4" id="restart_indicator">
           <div class="spinner-border text-warning" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
         </div>
         <div class="row" id="results"></div>
+        <div class="row">
+          <table class="table table-striped">
+            <tbody id="results_table"></tbody>
+          </table>
+        </div>
+        
       </div>
 
     </div>
@@ -121,6 +133,7 @@
     'use strict';
     const category_pks = [{% for category in categories %}{{category.pk}}, {% endfor %}];
     const condition_indexes = [{% for condition in Item.CONDITIONS %}{{condition.index}}, {% endfor %}];
+    const condition_names = [{% for condition in Item.CONDITIONS %}'{{condition.name}}', {% endfor %}];
     let active_category_pks = [];
     let active_condition_indexes = [];
     let search_string = "";
@@ -162,11 +175,13 @@
 
         if (last_rendered_item_index < 0) {
           $('#results').html('');
+          $('#results_table').html('');
         }
 
         // generate and add new item html elements
         for (const item of items.slice(last_rendered_item_index + 1)) {
             let item_html = '';
+            if (!$("#table_toggle").is(':checked')) {
             item_html += '<div class="card item-card hover col-12 col-md-4" style="width: 18rem; padding-top: 1%; padding-bottom: 1%;" data-bs-toggle="modal" data-bs-target="#modal' + item["pk"] + '">';
             // image of the item
             item_html += '<div style="text-align:center; padding-top:6%; padding-bottom:4%" class="card-img-top rounded-corners">';
@@ -237,6 +252,12 @@
               item_html += '</div>';
               item_html += '</div>';
             item_html += '</div>';
+          } else {
+                      item_html += '<th scope="row">' + item["name"] + '</th>';
+                      item_html += '<td><i class="fas fa-hourglass-half"></i> ' + item["deadline"] + '</td>';
+                      item_html += '<td>' + condition_names[condition_indexes.indexOf(parseInt(item["condition_index"]))] + '</td>';
+                      item_html += '<td>$' + item["price"] + '</td>';
+                  }
 
               // modal
               item_html += '<div class="modal fade" style="cursor: auto;" id="modal';
@@ -368,7 +389,8 @@
               item_html += '</div>';
             item_html += '</div>';
             
-            const item_element = document.createElement("div");
+            let item_element = document.createElement("div");
+            if (!$("#table_toggle").is(':checked')) {
             item_element.classList.add("col-xxl-4");
             item_element.classList.add("col-xl-4");
             item_element.classList.add("col-lg-6");
@@ -377,6 +399,16 @@
             item_element.classList.add("mb-4");
             item_element.innerHTML = item_html;
             $('#results').append(item_element);
+            }
+            else {
+              item_element = document.createElement("tr");
+              item_element.setAttribute("class", "hover-orange");
+              item_element.setAttribute("data-bs-toggle", "modal");
+              item_element.setAttribute("data-bs-target", "#modal" + item["pk"]);
+              item_element.innerHTML = item_html;
+            $('#results_table').append(item_element);
+            }
+            
 
             // enable tooltips in item_element
             const tooltipTriggerList = [].slice.call(item_element.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -388,7 +420,11 @@
         if (items.length === 0) {
           const p = document.createElement("p");
           p.innerHTML = "No items match the current filters.";
+          if (!$("#table_toggle").is(':checked')) {
           $('#results').append(p);
+          } else {
+            $('#results_table').append(p);
+          }
         }
 
         // update index

@@ -361,6 +361,10 @@ a.titleLink{
    background-color: rgb(231, 231, 231) !important;
 }
 
+.hover-orange:hover {
+   background-color: rgb(255, 213, 159) !important;
+}
+
 .bg-shadow {
    background-color: #a3a3a388;
 }
