@@ -53,6 +53,8 @@
         {%endif%}
         <p class="card-text"><i class="fas fa-hourglass-half"></i> till {{item.deadline}}</p>
         <p class="card-text"><i class="fas fa-comment"></i> {{item.description}}</p>
+        <p class="card-text"><i class="fas fa-phone"></i>{{item.seller.contact}}</p>
+        <p class="card-text"><i class="fas fa-envelope"></i>{{item.seller.email}}</p>
         <p class="card-text"><i class="fa fa-check" aria-hidden="true"></i> Quality</p>
         {% if item.condition == Item.NEW%}
         <div class="progress">
