@@ -301,7 +301,7 @@
 
         function setup() {
             $("#notifications_dropdown").on("show.bs.dropdown", seeNotifications);
-            window.setTimeout(() => {populateNotificationsHTMLSynchronously(20, 10000, 10000)}, 0);
+            window.setTimeout(() => {populateNotificationsHTMLSynchronously(500, 200, 10000)}, 0);
             window.setInterval(getCount, 20000);
         }
 
