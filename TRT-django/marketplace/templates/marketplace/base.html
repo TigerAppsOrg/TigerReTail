@@ -217,6 +217,7 @@
             fetch("/notifications/get_relative/?count=" + count + "&direction=backward&base_notification_pk=" + base_notification_pk)
                 .then((resp) => {return resp.json();})
                 .then((data) => {
+                    let hasnew = data['notifications'].length != 0
                     if (data['notifications'].length != 0) {
                         notifications.push(...data['notifications']);
                         injectNotificationsHTML();
@@ -228,6 +229,7 @@
                         fetch("/notifications/get_relative/?count=" + count + "&direction=forward&base_notification_pk=" + base_notification_pk)
                             .then((resp) => {return resp.json();})
                             .then((data) => {
+                                hasnew = hasnew || (data['notifications'].length != 0)
                                 if (data['notifications'].length != 0) {
                                     notifications.unshift(...(data['notifications'].reverse())); // need to add reversed and to the front of the notifications list
                                     // update indexes, since array was shifted
@@ -240,7 +242,7 @@
 
                                     injectNotificationsHTML();
                                 }
-                                window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period, max_period)}, data['notifications'].length === 0 ? max_period : period);
+                                window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period, max_period)}, hasnew ? period : max_period);
                                 return;
                             })
                             .catch((error) => {

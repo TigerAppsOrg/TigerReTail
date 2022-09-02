@@ -82,12 +82,12 @@
 
         // indefinitely clears and gets more messages forward and backward in batches of size 'count' (when indicated to do so by state booleans)
         // in a synchronous fashion to avoid setState concurrency issues
-        manageMessagesSynchronously(count, period)
+        manageMessagesSynchronously(count, period, max_period)
         {
             if (this.state.clear_messages)
             {
                 this.setState({clear_messages: false, messages: [], beg_message_pk: -1, end_message_pk: -1}, () => {
-                    window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                    window.setTimeout(() => {this.manageMessagesSynchronously(count, period, max_period)}, period);
                 });
                 return;
             }
@@ -95,7 +95,7 @@
             {
                 if (!this.state.active_contact_pk)
                 {
-                    window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                    window.setTimeout(() => {this.manageMessagesSynchronously(count, period, max_period)}, period);
                     return;
                 }
                 
@@ -117,14 +117,14 @@
                             // sort by date
                             messages.sort((message1, message2) => message1['datetime']-message2['datetime']);
                             this.setState({get_more_messages: false, loading: this.state.clear_messages, messages: messages, end_message_pk: data['last_message_pk'], beg_message_pk: data['last_message_pk']}, () => {
-                                window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                                window.setTimeout(() => {this.manageMessagesSynchronously(count, period, max_period)}, period);
                             });
                         })
                         .catch((error) => {
                             if (error instanceof TypeError && error.message === "cancelled") {
                                 return console.log(error);
                             } 
-                            window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                            window.setTimeout(() => {this.manageMessagesSynchronously(count, period, max_period)}, max_period);
                             return console.log(error);
                         });
                     return;
@@ -134,6 +134,7 @@
                 fetch("/inbox/" + this.state.active_contact_pk + "/get_relative/?count=" + count + "&direction=forward&base_message_pk=" + this.state.end_message_pk)
                     .then((resp) => {return resp.json();})
                     .then((data) => {
+                        let hasnew = (data['sent'].length != 0) || (data['received'].length != 0)
                         let messages = [...this.state.messages]; // need a deep copy of array for changes to be detected in componentDidUpdate etc, since arrays are passed by ref
                         for (const sent_message of data['sent'])
                         {
@@ -150,6 +151,7 @@
                             fetch("/inbox/" + this.state.active_contact_pk + "/get_relative/?count=" + count + "&direction=backward&base_message_pk=" + this.state.beg_message_pk)
                                 .then((resp) => {return resp.json();})
                                 .then((data) => {
+                                    hasnew = hasnew || (data['sent'].length != 0) || (data['received'].length != 0)
                                     let messages = [...this.state.messages]; // need a deep copy of array for changes to be detected in componentDidUpdate etc, since arrays are passed by ref
                                     for (const sent_message of data['sent'])
                                     {
@@ -162,14 +164,14 @@
                                     // sort by date
                                     messages.sort((message1, message2) => message1['datetime']-message2['datetime']);
                                     this.setState({get_more_messages: false, messages: messages, beg_message_pk: data['last_message_pk'] == -1 ? this.state.beg_message_pk : data['last_message_pk']}, () => {
-                                        window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                                        window.setTimeout(() => {this.manageMessagesSynchronously(count, period, max_period)}, hasnew ? period : max_period);
                                     });
                                 })
                                 .catch((error) => {
                                     if (error instanceof TypeError && error.message === "cancelled") {
                                         return console.log(error);
                                     } 
-                                    window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                                    window.setTimeout(() => {this.manageMessagesSynchronously(count, period, max_period)}, max_period);
                                     return console.log(error);
                                 });
                         });
@@ -178,14 +180,14 @@
                         if (error instanceof TypeError && error.message === "cancelled") {
                             return console.log(error);
                         } 
-                        window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                        window.setTimeout(() => {this.manageMessagesSynchronously(count, period, max_period)}, max_period);
                         return console.log(error);
                     });
                 return;
             }
             else 
             {
-                window.setTimeout(() => {this.manageMessagesSynchronously(count, period)}, period);
+                window.setTimeout(() => {this.manageMessagesSynchronously(count, period, max_period)}, period);
                 return;
             }
         }
@@ -274,7 +276,7 @@
             text_input.value = '';
 
             // start the synchronous messages manager
-            window.setTimeout(() => {this.manageMessagesSynchronously(10, 100)}, 0);
+            window.setTimeout(() => {this.manageMessagesSynchronously(500, 200, 20000)}, 0);
             // periodically set get_more_messages to true
             window.setInterval(() => {this.setState({get_more_messages: true})}, 20);
         }
