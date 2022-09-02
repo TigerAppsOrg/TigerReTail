@@ -240,7 +240,7 @@
 
                                     injectNotificationsHTML();
                                 }
-                                window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period, max_period)}, data['notifications'].length === 0 ? max_period, period);
+                                window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period, max_period)}, data['notifications'].length === 0 ? max_period : period);
                                 return;
                             })
                             .catch((error) => {
