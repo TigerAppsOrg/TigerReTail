@@ -207,7 +207,7 @@
 
         // repeatedly retrieves and renders notifications synchronously to avoid concurrency issues
         // only this function and those it calls should touch 'notifications', 'first_rendered_notification_index', 'last_rendered_notification_index'
-        function populateNotificationsHTMLSynchronously(count, period) {
+        function populateNotificationsHTMLSynchronously(count, period, max_period) {
 
             // get notifications backward
             let base_notification_pk = -1;
@@ -240,19 +240,19 @@
 
                                     injectNotificationsHTML();
                                 }
-                                window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period)}, period);
+                                window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period, max_period)}, data['notifications'].length === 0 ? max_period, period);
                                 return;
                             })
                             .catch((error) => {
                                 if (error instanceof TypeError && error.message === "cancelled") {
                                     return console.log(error);
                                 }
-                                window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period)}, period);
+                                window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period, max_period)}, max_period);
                                 return console.log(error);
                             });
                         return;
                     } else {
-                        window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period)}, period);
+                        window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period, max_period)}, max_period);
                         return;
                     }
                     return;
@@ -261,7 +261,7 @@
                     if (error instanceof TypeError && error.message === "cancelled") {
                         return console.log(error);
                     }
-                    window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period)}, period);
+                    window.setTimeout(() => {populateNotificationsHTMLSynchronously(count, period, max_period)}, max_period);
                     return console.log(error);
                 });
             return;
@@ -301,8 +301,8 @@
 
         function setup() {
             $("#notifications_dropdown").on("show.bs.dropdown", seeNotifications);
-            window.setTimeout(() => {populateNotificationsHTMLSynchronously(20, 10000)}, 0);
-            window.setInterval(getCount, 1000);
+            window.setTimeout(() => {populateNotificationsHTMLSynchronously(20, 10000, 10000)}, 0);
+            window.setInterval(getCount, 20000);
         }
 
         $('document').ready(setup);
