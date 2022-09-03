@@ -221,6 +221,8 @@
                   {%endif%}
                   <p class="card-text"><i class="fas fa-hourglass-half"></i> till {{item.deadline}}</p>
                   <p class="card-text"><i class="fas fa-comment"></i> {{item.description}}</p>
+                  <p class="card-text"><i class="fas fa-phone"></i> &nbsp;{{item.seller.contact}}</p>
+                  <p class="card-text"><i class="fas fa-envelope"></i>&nbsp;{{item.seller.email}}</p>
                   {% for sale in item.transaction_set.all %}
                   {% if sale.status == Transaction.INITIATED %}
                   <strong>
