@@ -120,6 +120,8 @@
                             {%endif%}
                             <p class="card-text"><i class="fas fa-hourglass-half"></i> till {{item_request.deadline}}</p>
                             <p class="card-text"><i class="fas fa-comment"></i> {{item_request.description}}</p>
+                            <p class="card-text"><i class="fas fa-phone"></i> {{item_request.requester.contact}}</p>
+                            <p class="card-text"><i class="fas fa-envelope"></i> {{item_request.requester.email}}</p>
                             <p class="card-text"><i class="fa fa-check" aria-hidden="true"></i> Quality</p>
                             {% if item_request.condition == Item.NEW%}
                             <div class="progress">
@@ -154,6 +156,7 @@
                     </div>
 
                     <div class="modal-footer">
+                        <a style="margin-right: 10px;" target="_blank" href="{% url 'page_item_request' item_request.pk %}" data-bs-toggle="tooltip" data-bs-placement="top" title="Open in New Window"><i class="fas fa-external-link-alt"></i></a>
                     <button type="button" class="btn btn-secondary"
                         data-bs-dismiss="modal">Close</button>
                     </div>
