@@ -466,7 +466,7 @@ def getItemsRelative(request):
         items = Item.objects.filter(pk__in=items) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
     # annotate items by search string rank
-    items = items.annotate(rank=SearchRank(SearchVector("name", "description"), SearchQuery(search_string), cover_density=True))
+    items = items.annotate(rank=SearchRank(SearchVector("name", "description"), SearchQuery(search_string), cover_density=False))
 
     # annotate items by row number after sorting by search string rank (so no comparison issues with equal ranks)
     items = items.annotate(
@@ -1727,7 +1727,7 @@ def getItemRequestsRelative(request):
         item_requests = ItemRequest.objects.filter(pk__in=item_requests) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
     # annotate item requests by search string rank
-    item_requests = item_requests.annotate(rank=SearchRank(SearchVector("name", "description"), SearchQuery(search_string), cover_density=True))
+    item_requests = item_requests.annotate(rank=SearchRank(SearchVector("name", "description"), SearchQuery(search_string), cover_density=False))
 
     # annotate item requests by row number after sorting by search string rank (so no comparison issues with equal ranks)
     item_requests = item_requests.annotate(
