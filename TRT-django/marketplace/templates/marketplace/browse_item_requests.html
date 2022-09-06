@@ -143,6 +143,7 @@
             
     let last_rendered_item_request_index = -1;  // tracks last rendered item_request
     let restart = false;                // indicates that item_requests should be cleared
+    let long_timer = null;
     
 
     // set active_category_pks, active_condition_indexes, search_string appropriately
@@ -165,6 +166,12 @@
         search_string = $("#searchbar").val();
         restart = true; // trigger a clear of the item_requests array, since query parameters have changed
         $('#restart_indicator').removeClass('hide');
+
+        if (long_timer) {
+          window.clearTimeout(long_timer);
+          long_timer = null;
+          window.setTimeout(() => {populateItemRequestsSynchronously(500, 200, 200000)}, 0);
+        }
     }
 
     // generates and injects new item_request HTML elements, updates 'last_rendered_item_request_index'
@@ -406,6 +413,8 @@
     // (only this function and those it calls should ever touch 'item_requests', 'last_rendered_item_request_index' to avoid concurrency issues)
     function populateItemRequestsSynchronously(count, period, max_period) {
 
+      long_timer = null;
+
         if (restart) {
             restart = false;
             item_requests = [];
@@ -447,7 +456,7 @@
                 
                 // notice that setTimeout is called only in callback of fetch, to avoid concurrency issues
                 // (the call to setTimeout in the .catch only occurs if .then doesn't execute)
-                window.setTimeout(() => {populateItemRequestsSynchronously(count, period, max_period)}, data["item_requests"].length === 0 ? max_period : period);
+                long_timer = window.setTimeout(() => {populateItemRequestsSynchronously(count, period, max_period)}, data["item_requests"].length === 0 ? max_period : period);
                 return;
             })
             .catch((error) => {
