@@ -170,7 +170,7 @@
         if (long_timer) {
           window.clearTimeout(long_timer);
           long_timer = null;
-          window.setTimeout(() => {populateItemRequestsSynchronously(500, 200, 200000)}, 0);
+          window.setTimeout(() => {populateItemRequestsSynchronously(50, 200, 200000)}, 0);
         }
     }
 
@@ -471,7 +471,7 @@
     }
 
     function setup() {
-            window.setTimeout(() => {populateItemRequestsSynchronously(500, 200, 200000)}, 0);
+            window.setTimeout(() => {populateItemRequestsSynchronously(50, 200, 200000)}, 0);
         }
 
     $('document').ready(setup);
