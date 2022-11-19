@@ -116,16 +116,15 @@ def send_mail_activity(subject, body, senderEmail, receiverAccounts, fail_silent
 
 @background(schedule=300)
 def notifyEmailSparsely(pk, email, url):
-    pass
-    # notification = Notification.objects.get(pk=pk)
-    # if not notification.seen:
-    #     send_mail(
-    #         "Unread Notification(s) on Tiger ReTail",
-    #         "You have new notification(s) waiting to be read.\n" + url + "\n\nYou can change your email notification settings here: https://retail.tigerapps.org/account/edit/",
-    #         settings.EMAIL_NAME,
-    #         [email],
-    #         fail_silently=True,
-    #     )
+    notification = Notification.objects.get(pk=pk)
+    if not notification.seen:
+        send_mail(
+            "Unread Notification(s) on Tiger ReTail",
+            "You have new notification(s) waiting to be read.\n" + url + "\n\nYou can change your email notification settings here: https://retail.tigerapps.org/account/edit/",
+            settings.EMAIL_NAME,
+            [email],
+            fail_silently=True,
+        )
 
 
 # ----------------------------------------------------------------------
@@ -170,70 +169,68 @@ def notify(account, text, url, sparse=False, timeout=timedelta(minutes=5)):
 # notify and email a notice about item expiration being passed
 @background
 def expiredItemNotice(pk):
-    pass
-    # # check if the item still exists
-    # if not Item.objects.filter(pk=pk).exists():
-    #     return
+    # check if the item still exists
+    if not Item.objects.filter(pk=pk).exists():
+        return
 
-    # # check if the item has expired
-    # item = Item.objects.filter(pk=pk).first()
-    # if item.deadline >= timezone.now().date():
-    #     return
+    # check if the item has expired
+    item = Item.objects.filter(pk=pk).first()
+    if item.deadline >= timezone.now().date():
+        return
 
-    # # send notices
-    # send_mail_activity(
-    #     "Your Posted Item has Expired",
-    #     "Your posted item '"
-    #     + item.name
-    #     + "' has expired.\nPlease edit your item deadline if you would like to prevent your item from being removed.\nItems are removed "
-    #     + str(settings.EXPIRATION_BUFFER)
-    #     + " after their deadlines.",
-    #     settings.EMAIL_NAME,
-    #     [item.seller],
-    #     fail_silently=True,
-    # )
-    # notify(
-    #     item.seller,
-    #     "Your item '"
-    #     + item.name
-    #     + "' has expired. Please edit its deadline if you do not want it removed.",
-    #     reverse("list_items"),
-    # )
+    # send notices
+    send_mail_activity(
+        "Your Posted Item has Expired",
+        "Your posted item '"
+        + item.name
+        + "' has expired.\nPlease edit your item deadline if you would like to prevent your item from being removed.\nItems are removed "
+        + str(settings.EXPIRATION_BUFFER)
+        + " after their deadlines.",
+        settings.EMAIL_NAME,
+        [item.seller],
+        fail_silently=True,
+    )
+    notify(
+        item.seller,
+        "Your item '"
+        + item.name
+        + "' has expired. Please edit its deadline if you do not want it removed.",
+        reverse("list_items"),
+    )
 
 
 # ----------------------------------------------------------------------
 # notify and email a notice about item request expiration being passed
 @background
 def expiredItemRequestNotice(pk):
-    pass
-    # # check if the item request still exists
-    # if not ItemRequest.objects.filter(pk=pk).exists():
-    #     return
+    # check if the item request still exists
+    if not ItemRequest.objects.filter(pk=pk).exists():
+        return
 
-    # # check if the item request has expired
-    # item_request = ItemRequest.objects.filter(pk=pk).first()
-    # if item_request.deadline >= timezone.now().date():
-    #     return
+    # check if the item request has expired
+    item_request = ItemRequest.objects.filter(pk=pk).first()
+    if item_request.deadline >= timezone.now().date():
+        return
 
-    # # send notices
-    # send_mail_activity(
-    #     "Your Posted Item Request has Expired",
-    #     "Your posted item request for '"
-    #     + item_request.name
-    #     + "' has expired.\nPlease edit your item request deadline if you would like to prevent your item request from being removed.\nItem requests are removed "
-    #     + str(settings.EXPIRATION_BUFFER)
-    #     + " after their deadlines.",
-    #     settings.EMAIL_NAME,
-    #     [item_request.requester],
-    #     fail_silently=True,
-    # )
-    # notify(
-    #     item_request.requester,
-    #     "Your item request '"
-    #     + item_request.name
-    #     + "' has expired. Please edit its deadline if you do not want it removed.",
-    #     reverse("list_item_requests"),
-    # )
+    # send notices
+    send_mail_activity(
+        "Your Posted Item Request has Expired",
+        "Your posted item request for '"
+        + item_request.name
+        + "' has expired.\nPlease edit your item request deadline if you would like to prevent your item request from being removed.\nItem requests are removed "
+        + str(settings.EXPIRATION_BUFFER)
+        + " after their deadlines.",
+        settings.EMAIL_NAME,
+        [item_request.requester],
+        fail_silently=True,
+    )
+    notify(
+        item_request.requester,
+        "Your item request '"
+        + item_request.name
+        + "' has expired. Please edit its deadline if you do not want it removed.",
+        reverse("list_item_requests"),
+    )
 
 
 # ----------------------------------------------------------------------
@@ -2440,48 +2437,46 @@ def deleteExpired():
     expired_items = Item.objects.filter(
         deadline__lt=timezone.now() - settings.EXPIRATION_BUFFER
     )
-    print("Delete expired task called")
-    print(f"Number of expired items: {len(expired_items)}")
-    # for item in expired_items:
-    #     if item.status == Item.AVAILABLE:
-    #         # send email notice
-    #         send_mail_activity(
-    #             "Expired Item Removed",
-    #             "Your expired item '"
-    #             + item.name
-    #             + "' has been removed.\nIf you would still like to sell your item, please feel free to relist it.",
-    #             settings.EMAIL_NAME,
-    #             [item.seller],
-    #             fail_silently=True,
-    #         )
-    #         # notify the seller
-    #         notify(
-    #             item.seller,
-    #             "Your expired item '" + item.name + "' has been removed",
-    #             reverse("list_items"),
-    #         )
-    #         # delete the item
-    #         item.delete()
+    for item in expired_items:
+        if item.status == Item.AVAILABLE:
+            # send email notice
+            send_mail_activity(
+                "Expired Item Removed",
+                "Your expired item '"
+                + item.name
+                + "' has been removed.\nIf you would still like to sell your item, please feel free to relist it.",
+                settings.EMAIL_NAME,
+                [item.seller],
+                fail_silently=True,
+            )
+            # notify the seller
+            notify(
+                item.seller,
+                "Your expired item '" + item.name + "' has been removed",
+                reverse("list_items"),
+            )
+            # delete the item
+            item.delete()
 
-    # expired_item_requests = ItemRequest.objects.filter(
-    #     deadline__lt=timezone.now() - settings.EXPIRATION_BUFFER
-    # )
-    # for item_request in expired_item_requests:
-    #     # send email notice
-    #     send_mail_activity(
-    #         "Expired Item Request Removed",
-    #         "Your expired item request '"
-    #         + item_request.name
-    #         + "' has been removed.\nIf you would still like to request the item, please feel free to make another request.",
-    #         settings.EMAIL_NAME,
-    #         [item_request.requester],
-    #         fail_silently=True,
-    #     )
-    #     # notify the requester
-    #     notify(
-    #         item_request.requester,
-    #         "Your expired item request '" + item_request.name + "' has been removed",
-    #         reverse("list_item_requests"),
-    #     )
-    #     # delete the item request
-    #     item_request.delete()
+    expired_item_requests = ItemRequest.objects.filter(
+        deadline__lt=timezone.now() - settings.EXPIRATION_BUFFER
+    )
+    for item_request in expired_item_requests:
+        # send email notice
+        send_mail_activity(
+            "Expired Item Request Removed",
+            "Your expired item request '"
+            + item_request.name
+            + "' has been removed.\nIf you would still like to request the item, please feel free to make another request.",
+            settings.EMAIL_NAME,
+            [item_request.requester],
+            fail_silently=True,
+        )
+        # notify the requester
+        notify(
+            item_request.requester,
+            "Your expired item request '" + item_request.name + "' has been removed",
+            reverse("list_item_requests"),
+        )
+        # delete the item request
+        item_request.delete()
