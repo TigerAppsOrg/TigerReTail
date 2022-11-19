@@ -244,7 +244,7 @@
               //item_request availability
               item_request_html += '<div class="row" style="padding-top:3%;padding-bottom:4%">';
                 item_request_html += '<div class="col-sm-12">';
-                  item_request_html += '<a class="btn btn-success" style="padding-left: 23px; padding-right: 23px; margin-right: 6px;" href="/item_requests/' + item_request["pk"] + '/contact/">Contact</a>';
+                  item_request_html += '<a class="btn btn-success" style="padding-left: 23px; padding-right: 23px; margin-right: 6px;" href="mailto:' + item_request["email"] + '">Email</a>';
                   item_request_html += '<button type="button" id="button_modal';
                   item_request_html += item_request["pk"]
                   item_request_html += '" class="btn btn-secondary pull-right"';
@@ -359,7 +359,7 @@
                   // modal footer
                   item_request_html += '<div class="modal-footer">';
                     item_request_html += '<a style="margin-right: 10px;" target="_blank" href="/item_requests/' + item_request["pk"] + '/page/" data-bs-toggle="tooltip" data-bs-placement="top" title="Open in New Window"><i class="fas fa-external-link-alt"></i></a>';
-                    item_request_html += '<a class="btn btn-success" style="padding-left: 23px; padding-right: 23px;" href="/item_requests/' + item_request["pk"] + '/contact/">Contact</a>';
+                    item_request_html += '<a class="btn btn-success" style="padding-left: 23px; padding-right: 23px;" href="mailto:' + item_request["email"] + '">Email</a>';
                   item_request_html += '<button type="button" class="btn btn-secondary"data-bs-dismiss="modal">Close</button>';
                   item_request_html += '<a style="margin-left: 10px;" href="/flag_item_request/' + item_request["pk"] + '/" data-bs-toggle="tooltip" data-bs-placement="top" title="Report"><i class="fas fa-flag" style="color:orange;"></i></a>';
                   item_request_html += '</div>';
