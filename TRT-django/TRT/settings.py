@@ -170,8 +170,7 @@ ALT_ACCOUNT_SUFFIXES = ["", "_alt_a", "_alt_b"]
 # list of emails to send admin notices to
 ADMIN_EMAILS = ["aklin@princeton.edu", "tigerapps@princetonusg.com"]
 # time buffer after which expired items are deleted
-# EXPIRATION_BUFFER = timedelta(days=1)
-EXPIRATION_BUFFER = timedelta(seconds=300)
+EXPIRATION_BUFFER = timedelta(days=1)
 
 # S3 storage
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
