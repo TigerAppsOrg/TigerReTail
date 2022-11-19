@@ -2298,3 +2298,10 @@ def deleteExpired():
         )
         # delete the item request
         item_request.delete()
+
+
+# ----------------------------------------------------------------------
+# messaging system page
+@authentication_required
+def inbox(request):
+    return render(request, "marketplace/inbox.html")

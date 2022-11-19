@@ -61,4 +61,5 @@ urlpatterns = [
     path("demo/", views.demo, name="demo"),
     path("cas_selection/<str:quoted_url>/", views.casSelection, name="cas_selection"),
     path("cas_redirect/<str:quoted_cas_url>/<str:quoted_url>/", views.casRedirect, name="cas_redirect"),
+    path("inbox/", views.inbox, name="inbox"),
 ]

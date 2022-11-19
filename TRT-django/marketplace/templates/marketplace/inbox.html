@@ -1,0 +1,13 @@
+{% extends "marketplace/base.html" %}
+{% block content %}
+{% csrf_token %}
+
+<div class="gallery_back">
+    <div class="container">
+        <div id="gallery_title">Message Inbox</div>
+        <p class="pb-2">In-app messaging has been permanently removed. To contact
+            a seller/requester, use their email address found on the item listing.
+        </p>
+    </div>
+</div>
+{% endblock content %}
