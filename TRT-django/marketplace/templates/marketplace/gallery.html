@@ -382,7 +382,7 @@
                   // modal footer
                   item_html += '<div class="modal-footer">';
                     item_html += '<a style="margin-right: 10px;" target="_blank" href="/items/' + item["pk"] + '/page/" data-bs-toggle="tooltip" data-bs-placement="top" title="Open in New Window"><i class="fas fa-external-link-alt"></i></a>';
-                  item_html += '<a class="btn btn-primary" style="padding-left: 23px; padding-right: 23px;" href="/items/' + item["pk"] + '/contact/">Contact</a>';
+                  item_html += '<a class="btn btn-primary" style="padding-left: 23px; padding-right: 23px;" href="mailto:' + item["email"] + '">Email</a>';
                   item_html += '<form action="';
                   item_html += new_purchase_url;
                   item_html += '" method="post" style="display: inline-block;">';

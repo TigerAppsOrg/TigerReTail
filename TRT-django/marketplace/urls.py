@@ -8,7 +8,6 @@ urlpatterns = [
     path("items/new/", views.newItem, name="new_item"),
     path("items/<int:pk>/edit/", views.editItem, name="edit_item"),
     path("items/<int:pk>/delete/", views.deleteItem, name="delete_item"),
-    path("items/<int:pk>/contact/", views.contactItem, name="contact_item"),
     path("items/<int:pk>/page/", views.pageItem, name="page_item"),
     path("purchases/list/", views.listPurchases, name="list_purchases"),
     path("purchases/new/", views.newPurchase, name="new_purchase"),
@@ -30,11 +29,6 @@ urlpatterns = [
         name="delete_item_request",
     ),
     path(
-        "item_requests/<int:pk>/contact/",
-        views.contactItemRequest,
-        name="contact_item_request",
-    ),
-    path(
         "item_requests/<int:pk>/page/",
         views.pageItemRequest,
         name="page_item_request",
@@ -43,10 +37,6 @@ urlpatterns = [
         "item_requests/browse/", views.browseItemRequests, name="browse_item_requests"
     ),
     path("item_requests/get_relative/", views.getItemRequestsRelative, name="get_item_requests_relative"),
-    path("inbox/", views.inbox, name="inbox"),
-    path("inbox/<int:pk>/get/", views.getMessages, name="get_messages"),
-    path("inbox/<int:pk>/get_relative/", views.getMessagesRelative, name="get_messages_relative"),
-    path("inbox/send/", views.sendMessage, name="send_message"),
     path("notifications/list/", views.listNotifications, name="list_notifications"),
     path("notifications/get/", views.getNotifications, name="get_notifications"),
     path("notifications/get_relative/", views.getNotificationsRelative, name="get_notifications_relative"),
