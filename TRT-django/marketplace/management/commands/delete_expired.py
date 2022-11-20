@@ -8,11 +8,11 @@ class Command(BaseCommand):
     help = 'Deletes expired items and item requests'
 
     def handle(self, *args, **options):
-        self.deleteExpiredItems()
-        self.deleteExpiredItemRequests()
+        self.__deleteExpiredItems()
+        self.__deleteExpiredItemRequests()
 
-    def deleteExpiredItems(self):
         print("--- Running delete expired task")
+    def __deleteExpiredItems(self):
 
         expired_items = Item.objects.filter(
             deadline__lt=timezone.now() - settings.EXPIRATION_BUFFER,
@@ -28,13 +28,13 @@ class Command(BaseCommand):
             default_storage.delete(item.image.name)
 
             # delete album images
-            self.deleteAlbumImages(item.id)
+            self.__deleteAlbumImages(item.id)
 
             # delete the item
             item.delete()
 
-    def deleteExpiredItemRequests(self):
         print("--- Running delete expired item requests task")
+    def __deleteExpiredItemRequests(self):
 
         expired_item_requests = ItemRequest.objects.filter(
             deadline__lt=timezone.now() - settings.EXPIRATION_BUFFER
@@ -51,7 +51,7 @@ class Command(BaseCommand):
              # delete the item request
             item_request.delete()
 
-    def deleteAlbumImages(self, item_id):
+    def __deleteAlbumImages(self, item_id):
         album_images = AlbumImage.objects.filter(item=item_id)
         for image in album_images:
             print(f"Deleting its image: {image.image.name}")
