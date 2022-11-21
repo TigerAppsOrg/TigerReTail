@@ -4,6 +4,13 @@ from django.utils import timezone
 from django.conf import settings
 from django.core.files.storage import default_storage
 
+"""
+Django management sub-command used to delete expired item
+listings and item requests (and their associated images from S3).
+
+To run this command: `python manage.py delete_expired`
+"""
+
 class Command(BaseCommand):
     help = 'Deletes expired items and item requests'
 
@@ -12,19 +19,13 @@ class Command(BaseCommand):
         self.__deleteExpiredItemRequests()
 
     def __deleteExpiredItems(self):
-        print("======= Running delete expired task =======")
-
         expired_items = Item.objects.filter(
             deadline__lt=timezone.now() - settings.EXPIRATION_BUFFER,
             status = Item.AVAILABLE
         )
-        print(f"Number of expired items: {len(expired_items)}")
 
         for item in expired_items:
-            print(f"Deleting item: {item.name}, {item.id}")
-
             # delete lead image from S3
-            print(f" - Deleting its image: {item.image.name}")
             default_storage.delete(item.image.name)
 
             # delete album images
@@ -34,18 +35,12 @@ class Command(BaseCommand):
             item.delete()
 
     def __deleteExpiredItemRequests(self):
-        print("======= Running delete expired item requests task ======== ")
-
         expired_item_requests = ItemRequest.objects.filter(
             deadline__lt=timezone.now() - settings.EXPIRATION_BUFFER
         )
-        print(f"Number of expired requests: {len(expired_item_requests)}")
 
         for item_request in expired_item_requests:
-            print(f"Deleting item request: {item_request.name}, {item_request.id}")
-
             # delete lead image from S3
-            print(f" - Deleting its image: {item_request.image.name}")
             default_storage.delete(item_request.image.name)
 
             # delete the item request
@@ -54,12 +49,10 @@ class Command(BaseCommand):
     def __deleteAlbumImages(self, item_id):
         album_images = AlbumImage.objects.filter(item=item_id)
         for image in album_images:
-            print(f"- Deleting its image {image.image.name}")
-
-            # delete from S3
+            # delete album image from S3
             default_storage.delete(image.image.name)
 
-            # delete from table
+            # delete album image from table
             image.delete()
 
 
