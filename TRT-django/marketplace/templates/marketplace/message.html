@@ -54,24 +54,6 @@
         </div>
     {% endif %}
 
-    {% if account and account.remind_set_email_settings %}
-        <div class="toast notification" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="30000">
-            <div class="toast-body" style="background-color:rgb(142, 177, 216, 0.7);">
-                <div class="container">
-                    <div class="row d-flex align-items-center">
-                        <div class="col">
-                            <i class="fas fa-exclamation mr-2"></i> (NEW!) Change your email notification settings in your <a href="{% url 'edit_account' %}">account
-                            settings</a>.<br><a href="{% url 'stop_email_settings_reminder' %}">Do not show this reminder again.</a>
-                        </div>
-                        <div class="col-2 mx-1">
-                            <button class="btn" onclick="removeParentToast(this);">&times;</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-
     {% if messages %}
         {% for message in messages %}
             <div class="toast notification" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="30000">
