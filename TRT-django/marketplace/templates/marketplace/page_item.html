@@ -85,7 +85,7 @@
         </div>
     </div>
 
-    <a class="btn btn-primary" style="padding-left: 23px; padding-right: 23px;" href="{% url 'contact_item' item.pk %}">Contact</a>
+    <a class="btn btn-primary" style="padding-left: 23px; padding-right: 23px;" href="mailto:{{item.seller.email}}">Email</a>
     <form action="{% url 'new_purchase' %}" method="post" style="display: inline-block;">{% csrf_token %}<input type="hidden" name="pk" value="{{ item.pk }}"><input type="submit" class="btn btn-success pull-left" value="Purchase" style="padding-left: 19px; padding-right: 19px;"></form>
     <a style="margin-left: 10px;" href="{% url 'flag_item' item.pk %}" data-bs-toggle="tooltip" data-bs-placement="top" title="Report"><i class="fas fa-flag" style="color:orange;"></i></a>
 </div>

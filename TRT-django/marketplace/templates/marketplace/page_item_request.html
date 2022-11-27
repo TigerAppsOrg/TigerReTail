@@ -68,7 +68,7 @@
       </div>
     </div>
 
-    <a class="btn btn-success" style="padding-left: 23px; padding-right: 23px;" href="{% url 'contact_item_request' item_request.pk %}">Contact</a>
+    <a class="btn btn-success" style="padding-left: 23px; padding-right: 23px;" href="mailto:{{item_request.requester.email}}">Email</a>
     <a style="margin-left: 10px;" href="{% url 'flag_item_request' item_request.pk %}" data-bs-toggle="tooltip" data-bs-placement="top" title="Report"><i class="fas fa-flag" style="color:orange;"></i></a>
     </div>
 

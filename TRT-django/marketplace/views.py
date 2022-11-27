@@ -803,68 +803,6 @@ def deleteItem(request, pk):
 
 # ----------------------------------------------------------------------
 
-# contact the seller of an item
-
-
-@authentication_required
-def contactItem(request, pk):
-    account = Account.objects.get(username=request.session.get("username"))
-
-    try:
-        item = Item.objects.get(pk=pk)
-    except:
-        return HttpResponse(status=400)
-
-    # cannot contact your own item
-    if item.seller == account:
-        # rejected
-        messages.warning(
-            request, "Cannot respond to an item you posted yourself."
-        )
-        return redirect("gallery")
-
-    # create a contact and set log
-    account.contacts.add(item.seller)  # (m2m goes both ways)
-    # notify the seller
-    notify(
-        item.seller,
-        account.name
-        + " has connected with you regarding your item. You can now send direct messages through the inbox regarding your item '"
-        + item.name + "'",
-        request.build_absolute_uri(reverse("inbox")),
-    )
-    # notify the contacter
-    notify(
-        account,
-        item.seller.name
-        + " has been added as a contact. You can now send direct messages through the inbox regarding the item '"
-        + item.name + "'",
-        request.build_absolute_uri(reverse("inbox")),
-    )
-    send_mail_activity(
-        "Received Response to Your Posted Item",
-        "Your item '" + item.name + "' has been responded to by a potential buyer, " + account.name + ".\n"
-        + "You can now send direct messages through the inbox. " + request.build_absolute_uri(reverse("inbox")),
-        settings.EMAIL_NAME,
-        [item.seller],
-        fail_silently=True,
-    )
-    # create an item log, which will be used to list the item history for the seller
-    logItemAction(item, account, "contact")
-    messages.success(
-        request,
-        "You can directly message "
-        + item.seller.name
-        + " about the item '"
-        + item.name
-        + "' through the inbox!",
-    )
-
-    return redirect("inbox")
-
-
-# ----------------------------------------------------------------------
-
 # item page
 
 
@@ -1148,22 +1086,6 @@ def acceptSale(request, pk):
         messages.success(request, "Sale acknowledged.")
         # open contact between buyer and seller
         account.contacts.add(sale.buyer)  # (m2m goes both ways)
-        # notify the buyer
-        notify(
-            sale.buyer,
-            account.name
-            + " has connected with you. You can now send direct messages to the seller through the inbox regarding '"
-            + sale.item.name + "'",
-            request.build_absolute_uri(reverse("inbox")),
-        )
-        # notify the seller
-        notify(
-            account,
-            sale.buyer.name
-            + " has been added as a contact. You can now send direct messages to the buyer through the inbox regarding '"
-            + sale.item.name + "'",
-            request.build_absolute_uri(reverse("inbox")),
-        )
         # send confirmation email
         send_mail_activity(
             "Sale Accepted",
@@ -1560,68 +1482,6 @@ def deleteItemRequest(request, pk):
 
 # ----------------------------------------------------------------------
 
-# contact the requester of an item_request
-
-
-@authentication_required
-def contactItemRequest(request, pk):
-    account = Account.objects.get(username=request.session.get("username"))
-
-    try:
-        item_request = ItemRequest.objects.get(pk=pk)
-    except:
-        return HttpResponse(status=400)
-
-    # cannot contact your own item_request
-    if item_request.requester == account:
-        # rejected
-        messages.warning(
-            request, "Cannot respond to an item request you posted yourself."
-        )
-        return redirect("browse_item_requests")
-
-    # create a contact and set log
-    account.contacts.add(item_request.requester)  # (m2m goes both ways)
-    # notify the requester
-    notify(
-        item_request.requester,
-        account.name
-        + " has connected with you regarding your item request. You can now send direct messages through the inbox regarding your request for '"
-        + item_request.name + "'",
-        request.build_absolute_uri(reverse("inbox")),
-    )
-    # notify the contacter
-    notify(
-        account,
-        item_request.requester.name
-        + " has been added as a contact. You can now send direct messages through the inbox regarding the request for '"
-        + item_request.name + "'",
-        request.build_absolute_uri(reverse("inbox")),
-    )
-    send_mail_activity(
-        "Received Response to Your Item Request",
-        "Your item request '" + item_request.name + "' has been responded to by a potential seller, " + account.name + ".\n"
-        + "You can now send direct messages through the inbox. " + request.build_absolute_uri(reverse("inbox")),
-        settings.EMAIL_NAME,
-        [item_request.requester],
-        fail_silently=True,
-    )
-    # create an item request log, which will be used to list the item request history for the requester
-    logItemRequestAction(item_request, account, "contact")
-    messages.success(
-        request,
-        "You can directly message "
-        + item_request.requester.name
-        + " about the request for '"
-        + item_request.name
-        + "' through the inbox!",
-    )
-
-    return redirect("inbox")
-
-
-# ----------------------------------------------------------------------
-
 # item_request page
 
 
@@ -1918,19 +1778,6 @@ def getNotificationsRelative(request):
 
 # ----------------------------------------------------------------------
 
-# messaging system page
-
-
-@authentication_required
-def inbox(request):
-    account = Account.objects.get(username=request.session.get("username"))
-    contacts = account.contacts.all()
-    context = {"contacts": contacts}
-    return render(request, "marketplace/inbox.html", context)
-
-
-# ----------------------------------------------------------------------
-
 # get messages sent to and received from account pk
 
 
@@ -2032,35 +1879,6 @@ def getMessagesRelative(request, pk):
             "last_message_pk": last_message_pk,
         }
     )
-
-
-# ----------------------------------------------------------------------
-
-# send message to account pk
-
-
-@authentication_required
-def sendMessage(request):
-    account = Account.objects.get(username=request.session.get("username"))
-    # NOTE: using request.body instead of request.POST bc of frontend fetch() API
-    body = json.loads(request.body)
-
-    try:
-        contact = Account.objects.get(pk=body["pk"])
-        text = body["text"]
-    except:
-        return HttpResponse(status=400)
-
-    Message(sender=account, receiver=contact, datetime=timezone.now(), text=text).save()
-    # sparse notify the receiver
-    text = account.name + " has sent a message to your inbox"
-    notify(
-        account=contact,
-        text=text,
-        url=request.build_absolute_uri(reverse("inbox")),
-        sparse=True,
-    )
-    return HttpResponse(status=200)
 
 
 # ----------------------------------------------------------------------
@@ -2427,3 +2245,63 @@ def casSelection(request, quoted_url):
 def casRedirect(request, quoted_cas_url, quoted_url):
     return redirect(CASClient.getLoginUrl(unquote_plus(quoted_cas_url), unquote_plus(quoted_url) + ("?" if unquote_plus(quoted_url).find('?') == -1 else "&") + "quotedcasurl=" + unquote_plus(quoted_cas_url)))
 
+
+# ----------------------------------------------------------------------
+# repeated server maintenance
+# delete expired items/item_requests past timedelta specified in settings
+# (and no ongoing transaction)
+@background()
+def deleteExpired():
+    expired_items = Item.objects.filter(
+        deadline__lt=timezone.now() - settings.EXPIRATION_BUFFER
+    )
+    for item in expired_items:
+        if item.status == Item.AVAILABLE:
+            # send email notice
+            send_mail_activity(
+                "Expired Item Removed",
+                "Your expired item '"
+                + item.name
+                + "' has been removed.\nIf you would still like to sell your item, please feel free to relist it.",
+                settings.EMAIL_NAME,
+                [item.seller],
+                fail_silently=True,
+            )
+            # notify the seller
+            notify(
+                item.seller,
+                "Your expired item '" + item.name + "' has been removed",
+                reverse("list_items"),
+            )
+            # delete the item
+            item.delete()
+
+    expired_item_requests = ItemRequest.objects.filter(
+        deadline__lt=timezone.now() - settings.EXPIRATION_BUFFER
+    )
+    for item_request in expired_item_requests:
+        # send email notice
+        send_mail_activity(
+            "Expired Item Request Removed",
+            "Your expired item request '"
+            + item_request.name
+            + "' has been removed.\nIf you would still like to request the item, please feel free to make another request.",
+            settings.EMAIL_NAME,
+            [item_request.requester],
+            fail_silently=True,
+        )
+        # notify the requester
+        notify(
+            item_request.requester,
+            "Your expired item request '" + item_request.name + "' has been removed",
+            reverse("list_item_requests"),
+        )
+        # delete the item request
+        item_request.delete()
+
+
+# ----------------------------------------------------------------------
+# messaging system page
+@authentication_required
+def inbox(request):
+    return render(request, "marketplace/inbox.html")
