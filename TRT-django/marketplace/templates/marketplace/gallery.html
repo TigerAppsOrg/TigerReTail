@@ -217,12 +217,8 @@
                 item_html += item["price"]; 
                 item_html += ' USD</p>';
               }
-              // item posted date
-              item_html += '<p class="card-text"><i class="fas fa-hourglass-start"></i> Posted ';
-              item_html += item["posted_date"];
-              item_html += '</p>';
               // item deadline 
-              item_html += '<p class="card-text"><i class="fas fa-hourglass-end"></i> Expires ';
+              item_html += '<p class="card-text"><i class="fas fa-hourglass-half"></i> till ';
               item_html += item["deadline"];
               item_html += '</p>';
               // item quality
@@ -265,8 +261,7 @@
             item_html += '</div>';
           } else {
                       item_html += '<th scope="row">' + item["name"] + '</th>';
-                      item_html += '<td><i class="fas fa-hourglass-start"></i> Posted ' + item["posted_date"] + '</td>';
-                      item_html += '<td><i class="fas fa-hourglass-end"></i> Expires ' + item["deadline"] + '</td>';
+                      item_html += '<td><i class="fas fa-hourglass-half"></i> ' + item["deadline"] + '</td>';
                       item_html += '<td>' + condition_names[condition_indexes.indexOf(parseInt(item["condition_index"]))] + '</td>';
                       item_html += '<td>$' + item["price"] + '</td>';
                   }
@@ -343,12 +338,8 @@
                         item_html += item["price"]; 
                         item_html += ' USD</p>';
                       }
-                      // item posted date
-                      item_html += '<p class="card-text"><i class="fas fa-hourglass-start"></i> Posted ';
-                      item_html += item["posted_date"];
-                      item_html += '</p>';
                       // item deadline 
-                      item_html += '<p class="card-text"><i class="fas fa-hourglass-end"></i> Expires ';
+                      item_html += '<p class="card-text"><i class="fas fa-hourglass-half"></i> till ';
                       item_html += item["deadline"];
                       item_html += '</p>';
                       // item description

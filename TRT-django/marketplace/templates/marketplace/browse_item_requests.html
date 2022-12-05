@@ -214,12 +214,8 @@
                 item_request_html += item_request["price"]; 
                 item_request_html += ' USD</p>';
               }
-              // item_request posted_date
-              item_request_html += '<p class="card-text"><i class="fas fa-hourglass-start"></i> Posted ';
-              item_request_html += item_request["posted_date"];
-              item_request_html += '</p>';
               // item_request deadline 
-              item_request_html += '<p class="card-text"><i class="fas fa-hourglass-end"></i> Expires ';
+              item_request_html += '<p class="card-text"><i class="fas fa-hourglass-half"></i> till ';
               item_request_html += item_request["deadline"];
               item_request_html += '</p>';
               // item_request quality
@@ -263,8 +259,7 @@
             item_request_html += '</div>';
           } else {
                       item_request_html += '<th scope="row">' + item_request["name"] + '</th>';
-                      item_request_html += '<td><i class="fas fa-hourglass-start"></i> Posted ' + item_request["posted_date"] + '</td>';
-                      item_request_html += '<td><i class="fas fa-hourglass-end"></i> Expires ' + item_request["deadline"] + '</td>';
+                      item_request_html += '<td><i class="fas fa-hourglass-half"></i> ' + item_request["deadline"] + '</td>';
                       item_request_html += '<td>' + condition_names[condition_indexes.indexOf(parseInt(item_request["condition_index"]))] + '</td>';
                       item_request_html += '<td>$' + item_request["price"] + '</td>';
                   }
@@ -320,12 +315,8 @@
                         item_request_html += item_request["price"]; 
                         item_request_html += ' USD</p>';
                       }
-                      // item_request posted_Date 
-                      item_request_html += '<p class="card-text"><i class="fas fa-hourglass-start"></i> Posted ';
-                      item_request_html += item_request["posted_date"];
-                      item_request_html += '</p>';
                       // item_request deadline 
-                      item_request_html += '<p class="card-text"><i class="fas fa-hourglass-end"></i> Expires ';
+                      item_request_html += '<p class="card-text"><i class="fas fa-hourglass-half"></i> till ';
                       item_request_html += item_request["deadline"];
                       item_request_html += '</p>';
                       // item_request description
