@@ -506,7 +506,7 @@ def getItemsRelative(request):
                 {
                     "pk": item.pk,
                     "name": item.name,
-                    "posted_date": item.posted_date.astimezone().strftime("%b. %-d, %Y, %-I:%M %p"),
+                    "posted_date": item.posted_date.astimezone().strftime("%b. %-d, %Y, %-I:%M %p") + " ET",
                     "deadline": item.deadline.strftime("%b. %-d, %Y"),
                     "price": item.price,
                     "negotiable": item.negotiable,
@@ -1626,7 +1626,7 @@ def getItemRequestsRelative(request):
                 {
                     "pk": item_request.pk,
                     "name": item_request.name,
-                    "posted_date": item_request.posted_date.astimezone().strftime("%b. %-d, %Y, %-I:%M %p"),
+                    "posted_date": item_request.posted_date.astimezone().strftime("%b. %-d, %Y, %-I:%M %p") + " ET",
                     "deadline": item_request.deadline.strftime("%b. %-d, %Y"),
                     "price": item_request.price,
                     "negotiable": item_request.negotiable,
