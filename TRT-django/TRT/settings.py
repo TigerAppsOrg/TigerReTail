@@ -164,7 +164,7 @@ CACHES = {
 }
 
 # list of usernames for which we allow multi-accounts
-ADMIN_USERNAMES = ["ptn_aklin", "ptn_singl", "ptn_kjm3", "ptn_sarats", "ptn_ca9"]
+ADMIN_USERNAMES = ["ptn_aklin", "ptn_singl", "ptn_kjm3", "ptn_sarats", "ptn_ca9", "ptn_ntyp"]
 # list of alt account suffixes for admins
 ALT_ACCOUNT_SUFFIXES = ["", "_alt_a", "_alt_b"]
 # list of emails to send admin notices to
