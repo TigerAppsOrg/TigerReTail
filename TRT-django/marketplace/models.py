@@ -112,10 +112,7 @@ class Item(models.Model):
             (CONDITION['index'], CONDITION['name']) for CONDITION in CONDITIONS
         ],
     )
-    categories = models.ManyToManyField(
-        Category, 
-        help_text=mark_safe("""Sell textbooks on <a href="https://rebook.tigerapps.org/" target="_blank">rebook</a>""")
-    )
+    categories = models.ManyToManyField(Category)
     description = models.CharField(max_length=1000)
     image = models.ImageField(upload_to="images/")
     status = models.DecimalField(
@@ -242,10 +239,7 @@ class ItemRequest(models.Model):
             (CONDITION['index'], CONDITION['name']) for CONDITION in Item.CONDITIONS
         ],
     )
-    categories = models.ManyToManyField(
-            Category,
-            help_text=mark_safe("""Find textbooks on <a href="https://rebook.tigerapps.org/" target="_blank">rebook</a>""")
-)
+    categories = models.ManyToManyField(Category)
     description = models.CharField(max_length=1000)
     image = models.ImageField(upload_to="images/")
 
