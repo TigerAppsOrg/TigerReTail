@@ -465,16 +465,51 @@ def getItemsRelative(request):
         items = items.filter(categories__in=categories)
         items = Item.objects.filter(pk__in=items) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
-    # annotate items by search string rank
-    items = items.annotate(rank=SearchRank(SearchVector("name", "description"), SearchQuery(search_string), cover_density=True))
-
-    # annotate items by row number after sorting by search string rank (so no comparison issues with equal ranks)
-    items = items.annotate(
-        row=Window(
-            expression=RowNumber(),
-            order_by=[F("rank").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+    # sort items by price or date if requested
+    if "sortbyprice_hightolow" in request.GET:
+        items = items.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("price").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
         )
-    )
+
+    elif "sortbyprice_lowtohigh" in request.GET:
+        items = items.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("price").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
+        )
+
+    elif "sortbydate_oldtorec" in request.GET:
+        items = items.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("posted_date").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
+        )
+
+    elif "sortbydate_rectoold" in request.GET:
+        items = items.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("posted_date").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
+        )
+
+    # default sort
+    else:
+        # annotate items by search string rank
+        items = items.annotate(rank=SearchRank(SearchVector("name", "description"), SearchQuery(search_string), cover_density=True))
+
+        # annotate items by row number after sorting by search string rank (so no comparison issues with equal ranks)
+        items = items.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("rank").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
+        )
 
     # get the correct slice of items
     if base_item_pk == -1:
@@ -1587,16 +1622,51 @@ def getItemRequestsRelative(request):
         item_requests = item_requests.filter(categories__in=categories)
         item_requests = ItemRequest.objects.filter(pk__in=item_requests) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
-    # annotate item requests by search string rank
-    item_requests = item_requests.annotate(rank=SearchRank(SearchVector("name", "description"), SearchQuery(search_string), cover_density=True))
-
-    # annotate item requests by row number after sorting by search string rank (so no comparison issues with equal ranks)
-    item_requests = item_requests.annotate(
-        row=Window(
-            expression=RowNumber(),
-            order_by=[F("rank").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+    # sort items by price or date if requested
+    if "sortbyprice_hightolow" in request.GET:
+        item_requests = item_requests.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("price").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
         )
-    )
+
+    elif "sortbyprice_lowtohigh" in request.GET:
+        item_requests = item_requests.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("price").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
+        )
+
+    elif "sortbydate_oldtorec" in request.GET:
+        item_requests = item_requests.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("posted_date").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
+        )
+
+    elif "sortbydate_rectoold" in request.GET:
+        item_requests = item_requests.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("posted_date").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
+        )
+
+    # default sort
+    else:
+        # annotate items by search string rank
+        item_requests = item_requests.annotate(rank=SearchRank(SearchVector("name", "description"), SearchQuery(search_string), cover_density=True))
+
+        # annotate items by row number after sorting by search string rank (so no comparison issues with equal ranks)
+        item_requests = item_requests.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("rank").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
+        )
 
     # get the correct slice of item requests
     if base_item_request_pk == -1:
