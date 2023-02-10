@@ -78,10 +78,10 @@
                 sort by
             </button>
             <div class="dropdown-menu  dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-                <a class="dropdown-item" href="#">price: low to high</a>
-                <a class="dropdown-item" href="#">price: high to low</a>
-                <a class="dropdown-item" href="#">date posted: newest</a>
-                <a class="dropdown-item" href="#">date posted: oldest</a>
+                <a class="dropdown-item" onClick="updateQuerySort('price_lowtohigh')">price: low to high</a>
+                <a class="dropdown-item" onClick="updateQuerySort('price_hightolow')">price: high to low</a>
+                <a class="dropdown-item" onClick="updateQuerySort('date_rectoold')">date posted: newest</a>
+                <a class="dropdown-item" onClick="updateQuerySort('date_oldtorec')">date posted: oldest</a>
             </div>
         </div>
     </div>
@@ -153,6 +153,7 @@
     let active_category_pks = [];
     let active_condition_indexes = [];
     let search_string = "";
+    let sort_type = "";
 
     let items = [];        // continuously gathered items, sorted by most relevant first
     // each item is a dict {"pk", "name", "price", "description", "lead_image", "album", etc.}
@@ -166,7 +167,7 @@
 
 
     // set active_category_pks, active_condition_indexes, search_string appropriately
-    // based on current inputs
+    // based on current inputs, refresh listings
     function updateQuery() {
         active_category_pks = [];
         active_condition_indexes = [];
@@ -191,6 +192,29 @@
           long_timer = null;
           window.setTimeout(() => {populateItemsSynchronously(50, 200, 200000)}, 0);
         }
+    }
+
+    // sets sort_type based on current inputs, refresh listings
+    function updateQuerySort(sort_type_input) {
+      // update sort_type variable
+      if (sort_type_input == "price_hightolow") {
+          sort_type = "price_hightolow";
+      } else if (sort_type_input == "price_lowtohigh") {
+        sort_type = "price_lowtohigh";
+      } else if (sort_type_input == "date_oldtorec") {
+        sort_type = "date_oldtorec";
+      } else if (sort_type_input == "date_rectoold") {
+        sort_type = "date_rectoold";
+      }
+
+      // refresh listings
+      restart = true; // trigger a clear of the items array, since query parameters have changed
+      $('#restart_indicator').removeClass('hide');
+      if (long_timer) {
+        window.clearTimeout(long_timer);
+        long_timer = null;
+        window.setTimeout(() => {populateItemsSynchronously(50, 200, 200000)}, 0);
+      }
     }
 
     // generates and injects new item HTML elements, updates 'last_rendered_item_index'
@@ -495,7 +519,7 @@
         if (items.length != 0) {
             base_item_pk = items[items.length - 1]["pk"];
         }
-        fetch("/items/get_relative/?count=" + count + "&direction=backward&base_item_pk=" + base_item_pk + "&search_string=" + search_string + "&condition_indexes=" + conditions_str + "&category_pks=" + categories_str)
+        fetch("/items/get_relative/?count=" + count + "&direction=backward&base_item_pk=" + base_item_pk + "&search_string=" + search_string + "&condition_indexes=" + conditions_str + "&category_pks=" + categories_str + "&sort_type=" + sort_type)
             .then((resp) => {return resp.json();})
             .then((data) => {
 
