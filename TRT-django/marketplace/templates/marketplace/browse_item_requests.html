@@ -78,10 +78,10 @@
                 sort by
             </button>
             <div class="dropdown-menu  dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-                <a class="dropdown-item" href="#">price: low to high</a>
-                <a class="dropdown-item" href="#">price: high to low</a>
-                <a class="dropdown-item" href="#">date posted: newest</a>
-                <a class="dropdown-item" href="#">date posted: oldest</a>
+                <a class="dropdown-item" href="{% url 'get_item_requests_relative' %}">price: low to high</a>
+                <a class="dropdown-item" href="{% url 'get_item_requests_relative' %}">price: high to low</a>
+                <a class="dropdown-item" href="{% url 'get_item_requests_relative' %}">date posted: newest</a>
+                <a class="dropdown-item" href="{% url 'get_item_requests_relative' %}">date posted: oldest</a>
             </div>
         </div>
     </div>
@@ -153,6 +153,7 @@
     let active_category_pks = [];
     let active_condition_indexes = [];
     let search_string = "";
+    let sort_type = "";
 
     let item_requests = [];        // continuously gathered item_requests, sorted by most relevant first
     // each item_request is a dict {"pk", "name", "price", "description", "lead_image", "album", etc.}

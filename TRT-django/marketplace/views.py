@@ -439,6 +439,7 @@ def getItemsRelative(request):
     search_string = ""
     condition_indexes = []
     categories = []
+    sort_type = ""
 
     if "search_string" in request.GET:
         search_string = request.GET["search_string"]
@@ -465,8 +466,18 @@ def getItemsRelative(request):
         items = items.filter(categories__in=categories)
         items = Item.objects.filter(pk__in=items) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
+    if "sort_type" in request.GET:
+        try:
+            sort_type = request.GET["sort_type"]
+            print("/////HELLO 1//////")
+        except:
+            print("hello 2")
+            return HttpResponse(status=400)
+
     # sort items by price or date if requested
-    if "sortbyprice_hightolow" in request.GET:
+    
+    # if "sortbyprice_hightolow" in request.GET:
+    if sort_type == "sortbyprice_hightolow":
         items = items.annotate(
             row=Window(
                 expression=RowNumber(),
@@ -1596,6 +1607,7 @@ def getItemRequestsRelative(request):
     search_string = ""
     condition_indexes = []
     categories = []
+    sort_type = ""
 
     if "search_string" in request.GET:
         search_string = request.GET["search_string"]
@@ -1623,7 +1635,20 @@ def getItemRequestsRelative(request):
         item_requests = ItemRequest.objects.filter(pk__in=item_requests) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
     # sort items by price or date if requested
+    
+    if "sort_type" in request.GET:
+        try:
+            sort_type = request.GET["sort_type"]
+            print("/////HELLO 1//////")
+        except:
+            print("hello 2")
+            return HttpResponse(status=400)
+
+    # sort items by price or date if requested
+    
     if "sortbyprice_hightolow" in request.GET:
+    # if sort_type == "sortbyprice_hightolow":
+    # if "sortbyprice_hightolow" in request.GET:
         item_requests = item_requests.annotate(
             row=Window(
                 expression=RowNumber(),
