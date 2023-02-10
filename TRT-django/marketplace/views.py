@@ -467,9 +467,11 @@ def getItemsRelative(request):
         items = Item.objects.filter(pk__in=items) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
     # sort items by price or date if requested
+
+    if "sort_type" in request.GET:
+        sort_type = request.GET["sort_type"]
     
-    # if "sortbyprice_hightolow" in request.GET:
-    if sort_type == "sortbyprice_hightolow":
+    if sort_type == "price_hightolow":
         items = items.annotate(
             row=Window(
                 expression=RowNumber(),
@@ -477,7 +479,7 @@ def getItemsRelative(request):
             )
         )
 
-    elif "sortbyprice_lowtohigh" in request.GET:
+    elif sort_type == "price_lowtohigh":
         items = items.annotate(
             row=Window(
                 expression=RowNumber(),
@@ -485,7 +487,7 @@ def getItemsRelative(request):
             )
         )
 
-    elif "sortbydate_oldtorec" in request.GET:
+    elif sort_type == "date_oldtorec":
         items = items.annotate(
             row=Window(
                 expression=RowNumber(),
@@ -493,7 +495,7 @@ def getItemsRelative(request):
             )
         )
 
-    elif "sortbydate_rectoold" in request.GET:
+    elif sort_type == "date_rectoold":
         items = items.annotate(
             row=Window(
                 expression=RowNumber(),
