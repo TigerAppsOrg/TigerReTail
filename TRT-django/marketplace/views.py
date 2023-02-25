@@ -1635,31 +1635,31 @@ def getItemRequestsRelative(request):
         item_requests = item_requests.annotate(
             row=Window(
                 expression=RowNumber(),
-                order_by=[F("price").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
-    elif sort_type == "sortbyprice_lowtohigh":
-        item_requests = item_requests.annotate(
-            row=Window(
-                expression=RowNumber(),
                 order_by=[F("price").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
             )
         )
 
-    elif sort_type == "sortbydate_oldtorec":
+    elif sort_type == "price_lowtohigh":
         item_requests = item_requests.annotate(
             row=Window(
                 expression=RowNumber(),
-                order_by=[F("posted_date").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+                order_by=[F("price").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
             )
         )
 
-    elif sort_type == "sortbydate_rectoold":
+    elif sort_type == "date_oldtorec":
         item_requests = item_requests.annotate(
             row=Window(
                 expression=RowNumber(),
                 order_by=[F("posted_date").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+            )
+        )
+
+    elif sort_type == "date_rectoold":
+        item_requests = item_requests.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=[F("posted_date").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
             )
         )
 
