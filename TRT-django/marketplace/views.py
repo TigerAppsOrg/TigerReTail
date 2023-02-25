@@ -474,7 +474,7 @@ def getItemsRelative(request):
         items = items.annotate(
             row=Window(
                 expression=RowNumber(),
-                order_by=[F("price").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+                order_by=[F("price").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
             )
         )
 
@@ -482,7 +482,7 @@ def getItemsRelative(request):
         items = items.annotate(
             row=Window(
                 expression=RowNumber(),
-                order_by=[F("price").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+                order_by=[F("price").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
             )
         )
 
@@ -490,7 +490,7 @@ def getItemsRelative(request):
         items = items.annotate(
             row=Window(
                 expression=RowNumber(),
-                order_by=[F("posted_date").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+                order_by=[F("posted_date").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
             )
         )
 
@@ -498,7 +498,7 @@ def getItemsRelative(request):
         items = items.annotate(
             row=Window(
                 expression=RowNumber(),
-                order_by=[F("posted_date").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+                order_by=[F("posted_date").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
             )
         )
 
