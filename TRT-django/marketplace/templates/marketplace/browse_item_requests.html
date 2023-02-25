@@ -193,15 +193,7 @@
     // sets sort_type based on current inputs, refresh listings
     function updateQuerySort(sort_type_input) {
       // update sort_type variable
-      if (sort_type_input == "price_hightolow") {
-          sort_type = "price_hightolow";
-      } else if (sort_type_input == "price_lowtohigh") {
-        sort_type = "price_lowtohigh";
-      } else if (sort_type_input == "date_oldtorec") {
-        sort_type = "date_oldtorec";
-      } else if (sort_type_input == "date_rectoold") {
-        sort_type = "date_rectoold";
-      }
+      sort_type = sort_type_input
 
       // refresh listings
       restart = true; // trigger a clear of the item_requests array, since query parameters have changed
