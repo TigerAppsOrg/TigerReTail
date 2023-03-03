@@ -17,9 +17,9 @@ an online web platform for Princeton students to buy/sell/request goods
    - Login to Heroku and go to the Settings tab for the `trt-dev` app (do NOT use prod!)
    - Reveal Config Vars
    - For each Config Var key-value pair, create a local environment variable: `conda env config vars set key=value` (replace `key` and `value` with the actual key and value)
-   - For each env var you set, reactivate your conda environment: `conda activate tigerretail`
+   - After setting all env vars, reactivate your conda environment: `conda activate tigerretail`
    - Note that for `SECRET_KEY`, you might get an error so you can set its value to `1`
-2. Run `conda env config vars list` to validate all env vars were set.
+1. Run `conda env config vars list` to validate all env vars were set.
 
 ## Running the dev server
 
