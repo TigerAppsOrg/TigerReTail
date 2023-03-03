@@ -28,4 +28,4 @@ After following the initial setup steps above, you can run the local development
 1. `cd` into the `TRT-django` directory (a subfolder of the base directory)
 1. Activate your environment: `conda activate tigerretail`
 1. Run the server: `python manage.py runserver`
-   - Visit `http://127.0.0.1:8000/` to verify the server is up and running. Note that you probably won't see most of the listing pictures.
+   - Visit `http://localhost:8000/` to verify the server is up and running. Note that you probably won't see most of the listing pictures.
