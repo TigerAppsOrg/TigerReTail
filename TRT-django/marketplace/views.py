@@ -163,79 +163,9 @@ def notify(account, text, url, sparse=False, timeout=timedelta(minutes=5)):
             email=account.email,
             url=url,
         )
-# ----------------------------------------------------------------------
-
-# helper method to get correct ordering given sort_type
-
-def ordering(sort_type):
-    try:
-        if sort_type == "price_hightolow":
-            return [F("price").asc(), F("pk").asc()]
-
-        elif sort_type == "price_lowtohigh":
-            return [F("price").desc(), F("pk").asc()]
-
-        elif sort_type == "date_oldtorec":
-            return [F("posted_date").desc(), F("pk").asc()]
-        
-        elif sort_type == "date_rectoold":
-            return [F("posted_date").asc(), F("pk").asc()]
-
-    except:
-         return HttpResponse(status=400)
 
 # ----------------------------------------------------------------------
-# helper method to reduce overlap between items & item requests for sorting
 
-def sortMyItems(sort_type, myItems):
-    if sort_type == "price_hightolow":
-        myItems = myItems.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=ordering, # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
-    elif sort_type == "price_lowtohigh":
-        myItems = myItems.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("price").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
-    elif sort_type == "date_oldtorec":
-        myItems = myItems.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("posted_date").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
-    elif sort_type == "date_rectoold":
-        myItems = myItems.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("posted_date").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
-    # default sort
-    else:
-        # annotate items by search string rank
-        myItems = myItems.annotate(rank=SearchRank(SearchVector("name", "description"), SearchQuery(search_string), cover_density=True))
-
-        # annotate items by row number after sorting by search string rank (so no comparison issues with equal ranks)
-        myItems = myItems.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("rank").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
-    return myItems
-
-# ----------------------------------------------------------------------
 # notify and email a notice about item expiration being passed
 @background
 def expiredItemNotice(pk):
@@ -1684,7 +1614,6 @@ def getItemRequestsRelative(request):
         item_requests = item_requests.filter(categories__in=categories)
         item_requests = ItemRequest.objects.filter(pk__in=item_requests) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
-    # sort items by price or date if requested
     # sort items by price or date if requested
     order_by = ""
     if "sort_type" in request.GET:
