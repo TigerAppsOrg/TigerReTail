@@ -536,44 +536,29 @@ def getItemsRelative(request):
         items = Item.objects.filter(pk__in=items) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
     # sort items by price or date if requested
+    order_by = ""
     if "sort_type" in request.GET:
         sort_type = request.GET["sort_type"]
 
-#    items = sortMyItems(sort_type, items)
+        # items = sortMyItems(sort_type, items)
 
+        if sort_type == "price_hightolow":
+            order_by = [F("price").asc(), F("pk").asc()]
+        elif sort_type == "price_lowtohigh":
+            order_by=[F("price").desc(), F("pk").asc()]
+        elif sort_type == "date_oldtorec":
+            order_by=[F("posted_date").desc(), F("pk").asc()]
+        elif sort_type == "date_rectoold":
+            order_by=[F("posted_date").asc(), F("pk").asc()]
+
+    if order_by != "":
+        items = items.annotate(
+            row=Window(
+                expression=RowNumber(),
+                order_by=order_by, 
+            )
+        )
     
-    if sort_type == "price_hightolow":
-        items = items.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("price").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
-    elif sort_type == "price_lowtohigh":
-        items = items.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("price").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
-    elif sort_type == "date_oldtorec":
-        items = items.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("posted_date").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
-    elif sort_type == "date_rectoold":
-        items = items.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("posted_date").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
-
     # default sort
     else:
         # annotate items by search string rank
@@ -586,7 +571,6 @@ def getItemsRelative(request):
                 order_by=[F("rank").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
             )
         )
-
 
     # get the correct slice of items
     if base_item_pk == -1:
@@ -1701,38 +1685,27 @@ def getItemRequestsRelative(request):
         item_requests = ItemRequest.objects.filter(pk__in=item_requests) # get rid of duplicate rows (can happen because of filtering on m2m categories table)
 
     # sort items by price or date if requested
+    # sort items by price or date if requested
+    order_by = ""
     if "sort_type" in request.GET:
         sort_type = request.GET["sort_type"]
-    
-    if sort_type == "price_hightolow":
-        item_requests = item_requests.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("price").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
 
-    elif sort_type == "price_lowtohigh":
-        item_requests = item_requests.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("price").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
+        # items = sortMyItems(sort_type, items)
 
-    elif sort_type == "date_oldtorec":
-        item_requests = item_requests.annotate(
-            row=Window(
-                expression=RowNumber(),
-                order_by=[F("posted_date").desc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
-            )
-        )
+        if sort_type == "price_hightolow":
+            order_by = [F("price").asc(), F("pk").asc()]
+        elif sort_type == "price_lowtohigh":
+            order_by=[F("price").desc(), F("pk").asc()]
+        elif sort_type == "date_oldtorec":
+            order_by=[F("posted_date").desc(), F("pk").asc()]
+        elif sort_type == "date_rectoold":
+            order_by=[F("posted_date").asc(), F("pk").asc()]
 
-    elif sort_type == "date_rectoold":
+    if order_by != "":
         item_requests = item_requests.annotate(
             row=Window(
                 expression=RowNumber(),
-                order_by=[F("posted_date").asc(), F("pk").asc()], # also order by unique pk to make tie-breaks consistent
+                order_by=order_by, 
             )
         )
 
