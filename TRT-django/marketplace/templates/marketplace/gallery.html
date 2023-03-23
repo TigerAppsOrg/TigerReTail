@@ -21,7 +21,7 @@
               id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               Post
             </button>
-            <div class="dropdown-menu  dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
               <div class="container-fluid dropdown-item mx-0 px-0">
                 <div class="row"> 
                   <button class="post-dropdown-item px-0 mx-0" style="border:none; background-color:transparent; outline:none;" data-bs-toggle="modal" data-bs-target="#post-dropdown-item">POST ITEM</button>
@@ -63,11 +63,27 @@
   <div class="container my-4">
     <div id="gallery_title">Items for Sale</div>
     <p>Purchase items here. Check out our FAQ for more.</p>
-    <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="table_toggle" oninput="updateQuery()">
-        <label class="form-check-label" for="table_toggle">
-            view as table
-        </label>
+    <div class="row justify-content-between" style="align-items: center; margin: 0px;">
+        <!-- Checkbox to view as table -->
+        <div class="form-check col-2">
+            <input class="form-check-input" type="checkbox" id="table_toggle" oninput="updateQuery()">
+            <label class="form-check-label" for="table_toggle">
+                view as table
+            </label>
+        </div>
+        <!-- Sorting options dropdown menu -->
+        <div class="dropdown show col-2">
+            <button class="btn btn-light dropdown-toggle px-3 hover-grey" style="font-weight: bold; border-color: #ced4da" type="button"
+              id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                sort by
+            </button>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item btn" onClick="updateQuerySort('price_lowtohigh')">price: low to high</a>
+                <a class="dropdown-item btn" onClick="updateQuerySort('price_hightolow')">price: high to low</a>
+                <a class="dropdown-item btn" onClick="updateQuerySort('date_rectoold')">date posted: newest</a>
+                <a class="dropdown-item btn" onClick="updateQuerySort('date_oldtorec')">date posted: oldest</a>
+            </div>
+        </div>
     </div>
     <hr>
   </div>
@@ -137,6 +153,7 @@
     let active_category_pks = [];
     let active_condition_indexes = [];
     let search_string = "";
+    let sort_type = "";
 
     let items = [];        // continuously gathered items, sorted by most relevant first
     // each item is a dict {"pk", "name", "price", "description", "lead_image", "album", etc.}
@@ -150,7 +167,7 @@
 
 
     // set active_category_pks, active_condition_indexes, search_string appropriately
-    // based on current inputs
+    // based on current inputs, refresh listings
     function updateQuery() {
         active_category_pks = [];
         active_condition_indexes = [];
@@ -175,6 +192,21 @@
           long_timer = null;
           window.setTimeout(() => {populateItemsSynchronously(50, 200, 200000)}, 0);
         }
+    }
+
+    // sets sort_type based on current inputs, refresh listings
+    function updateQuerySort(sort_type_input) {
+      // update sort_type variable
+      sort_type = sort_type_input
+
+      // refresh listings
+      restart = true; // trigger a clear of the items array, since query parameters have changed
+      $('#restart_indicator').removeClass('hide');
+      if (long_timer) {
+        window.clearTimeout(long_timer);
+        long_timer = null;
+        window.setTimeout(() => {populateItemsSynchronously(50, 200, 200000)}, 0);
+      }
     }
 
     // generates and injects new item HTML elements, updates 'last_rendered_item_index'
@@ -479,7 +511,7 @@
         if (items.length != 0) {
             base_item_pk = items[items.length - 1]["pk"];
         }
-        fetch("/items/get_relative/?count=" + count + "&direction=backward&base_item_pk=" + base_item_pk + "&search_string=" + search_string + "&condition_indexes=" + conditions_str + "&category_pks=" + categories_str)
+        fetch("/items/get_relative/?count=" + count + "&direction=backward&base_item_pk=" + base_item_pk + "&search_string=" + search_string + "&condition_indexes=" + conditions_str + "&category_pks=" + categories_str + "&sort_type=" + sort_type)
             .then((resp) => {return resp.json();})
             .then((data) => {
 
