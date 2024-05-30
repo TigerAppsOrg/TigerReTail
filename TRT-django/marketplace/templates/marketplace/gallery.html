@@ -224,7 +224,7 @@
             item_html += '<div class="card item-card hover col-12 col-md-4" style="width: 18rem; padding-top: 1%; padding-bottom: 1%;" data-bs-toggle="modal" data-bs-target="#modal' + item["pk"] + '">';
             // image of the item
             item_html += '<div style="text-align:center; padding-top:6%; padding-bottom:4%" class="card-img-top rounded-corners">';
-            item_html += '<div style="height: 150px;"><img src="';
+            item_html += '<div style="height: 150px;"><img loading="lazy" src="';
             item_html += item["image"];
             item_html += '" style="max-width: 220px; max-height: 150px; width: auto; height: auto;">';
             item_html += '</div></div>';
@@ -332,12 +332,12 @@
                       // carousel list box
                       item_html += '<div class="carousel-inner" role="listbox">';
                         item_html += '<div class="carousel-item active">';
-                          item_html += '<div style="height: 150px;"><a style="cursor: zoom-in;" target="_blank" href="' + item["image"] + '"><img src="';
+                          item_html += '<div style="height: 150px;"><a style="cursor: zoom-in;" target="_blank" href="' + item["image"] + '"><img loading="lazy" src="';
                           item_html += item["image"];
                         item_html += '" style="max-width: 220px; max-height: 150px; width: auto; height: auto;"></a></div></div>';
                         item["album"].forEach(picture =>{
                           item_html += '<div class="carousel-item">';
-                          item_html += '<div style="height: 150px;"><a style="cursor: zoom-in;" target="_blank" href="' + picture + '"><img src="';
+                          item_html += '<div style="height: 150px;"><a style="cursor: zoom-in;" target="_blank" href="' + picture + '"><img loading="lazy" src="';
                           item_html += picture;
                           item_html += '" style="max-width: 220px; max-height: 150px; width: auto; height: auto;"></a>';
                           item_html += '</div></div>';
